@@ -862,21 +862,38 @@ const store = {
   set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 const mem = new Map();
+/* Nomi squadra: "Inter" ovunque (ESPN scrive "Inter Milan" o "Internazionale") */
+const NAME_FIX = { "inter milan":"Inter", "internazionale":"Inter", "fc internazionale milano":"Inter", "inter de milán":"Inter", "inter milano":"Inter" };
+const NAME_KEYS = new Set(["displayName","shortDisplayName","name","location","nickname","shortName","team","tn"]);
+function fixNames(o){
+  if (!o || typeof o !== "object" || o.__nf) return o;
+  const walk = x => {
+    if (Array.isArray(x)) { for (const v of x) if (v && typeof v === "object") walk(v); return; }
+    for (const k in x){
+      const v = x[k];
+      if (typeof v === "string"){ if (NAME_KEYS.has(k)){ const f = NAME_FIX[v.toLowerCase()]; if (f) x[k] = f; } }
+      else if (v && typeof v === "object") walk(v);
+    }
+  };
+  walk(o);
+  try { Object.defineProperty(o, "__nf", { value:true, enumerable:false }); } catch {}
+  return o;
+}
 async function getJSON(url, ttlSec, noStore){
   url = url.replace(/^http:/, "https:");
   const now = Date.now();
   const hit = mem.get(url) || store.get("c:" + url);
-  if (hit && now - hit.t < ttlSec * 1000) return { data: hit.d, at: hit.t };
+  if (hit && now - hit.t < ttlSec * 1000) return { data: fixNames(hit.d), at: hit.t };
   try {
     const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 10000);
     const r = await fetch(url, { signal: ctl.signal }); clearTimeout(tm);
     if (!r.ok) throw new Error("HTTP " + r.status);
-    const d = await r.json();
+    const d = fixNames(await r.json());
     const rec = { t: now, d }; mem.set(url, rec);
     if (!noStore && JSON.stringify(d).length < 400000) store.set("c:" + url, rec);
     return { data: d, at: now };
   } catch (e) {
-    if (hit) return { data: hit.d, at: hit.t, stale: true };
+    if (hit) return { data: fixNames(hit.d), at: hit.t, stale: true };
     throw e;
   }
 }
@@ -1986,7 +2003,7 @@ let pidxBuilding = null, pidxProg = null;
 function playersIndex(onProg){
   if (playersIdx) return Promise.resolve(playersIdx);
   const c = store.get("pidx");
-  if (c && c.ver === 2 && Date.now() - c.t < 7 * 864e5 && c.v && c.v.length > 300) return Promise.resolve(playersIdx = c.v);
+  if (c && c.ver === 2 && Date.now() - c.t < 7 * 864e5 && c.v && c.v.length > 300) return Promise.resolve(playersIdx = fixNames(c.v));
   if (onProg) pidxProg = onProg;
   if (pidxBuilding) return pidxBuilding;
   pidxBuilding = (async () => {
