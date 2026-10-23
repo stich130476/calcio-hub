@@ -779,6 +779,7 @@ const ZONES = {
   "fra.1": [[1,3,"cl"],[4,4,"clq"],[5,5,"el"],[6,6,"conf"],[16,16,"pout"],[17,18,"rel"]],
   "ned.1": [[1,2,"cl"],[3,3,"clq"],[16,16,"pout"],[17,18,"rel"]],
   "ita.2": [[1,2,"promo"],[3,8,"po"],[16,17,"pout"],[18,20,"rel"]],
+  "ita.3": [[1,1,"promo"],[2,10,"po"],[16,19,"pout"],[20,20,"rel"]],
   "uefa.champions": [[1,8,"r16"],[9,24,"kpo"],[25,36,"out"]],
   "uefa.europa": [[1,8,"r16"],[9,24,"kpo"],[25,36,"out"]],
   "uefa.europa.conf": [[1,8,"r16"],[9,24,"kpo"],[25,36,"out"]]
@@ -1130,6 +1131,18 @@ async function u23Matches(){
   }).sort((a,b) => a.date - b.date);
   return { ms, at, stale, upd: data.aggiornato };
 }
+async function u23Table(){
+  const { data, at, stale } = await getJSON(U23_URL, 600);
+  const c = data.classifica; if (!c) return { data:{}, at, stale };
+  const logos = Object.assign({}, store.get("u23logos") || {}, data.stemmi || {});
+  const entries = c.righe.map(x => ({
+    team:{ id: x.squadra === U23.name ? "u23" : "u23:" + x.squadra, displayName:x.squadra, shortDisplayName:x.squadra.replace(/^Audace /, ""),
+           logos:[{ href: x.squadra === U23.name ? U23.logo : (logos[x.squadra] || "") }] },
+    stats:[["rank",x.pos],["gamesPlayed",x.g],["wins",x.v],["ties",x.n],["losses",x.p],["pointsFor",x.gf],["pointsAgainst",x.gs],["pointDifferential",x.gf - x.gs],["points",x.pt]].map(([name, value]) => ({ name, value }))
+  }));
+  const notes = c.righe.filter(x => x.nota).map(x => x.squadra + ": " + x.nota).join(" · ");
+  return { data:{ standings:{ entries } }, at, stale, upd:c.aggiornata, notes };
+}
 async function viewU23(){
   let r;
   try { r = await u23Matches(); }
@@ -1143,6 +1156,7 @@ async function viewU23(){
   if (last) html += `<div class="seclbl">Ultima partita</div><div class="cards">${card(last, U23)}</div>`;
   html += `<div class="seclbl">Prossime partite</div>` + (next.length ? `<div class="cards">${next.map(m => card(m, U23)).join("")}</div>`
         : `<div class="sheet">${emptyBox("Nessuna partita in programma", "La stagione è terminata.")}</div>`);
+  html += `<button class="press calbtn" data-u23tab><span class="ico">${ICONS.tab || ICONS.oggi}</span><span><b>Classifica del girone C</b><small>Posizione, punti e zone di Inter U23 e avversarie</small></span><span class="chev">›</span></button>`;
   html += `<div class="seclbl">Tutta la stagione · Serie C girone C</div><div class="sheet">${r.ms.map(m =>
       `<div class="u23d">Giornata ${m.g}<span>${esc(fmt(m.date, { weekday:"short", day:"numeric", month:"short" }).replace(/\./g, ""))}${m.tbd ? " · orario da definire" : ""}</span></div>${matchRow(m, BY["ita.3"])}`).join("")}</div>
     <p class="note" style="text-align:center;margin-top:12px">Calendario e risultati ufficiali di inter.it, aggiornati ogni sera.<br>Per la Serie C non esiste una fonte gratuita con la diretta.</p>`;
@@ -1301,10 +1315,9 @@ function card(m, f){
 async function viewTab(){
   const L = BY[S.league] || BY["ita.1"];
   $("#view").innerHTML = header(esc(L.n), L) + `<div id="tbl">${skel(6)}</div>`;
-  if (L.s === "ita.3"){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Classifica non disponibile", "Della Serie C seguiamo l'Inter U23: calendario e risultati sono in Le mie › Inter U23.")}</div>`; stamp(); return; }
   if (L.cup){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Nessuna classifica", esc(L.n) + " si gioca a eliminazione diretta o senza una tabella unica.")}</div>`; stamp(); return; }
   let r;
-  try { r = await getJSON(`${API}/v2/sports/soccer/${L.s}/standings`, 900); }
+  try { r = L.s === "ita.3" ? await u23Table() : await getJSON(`${API}/v2/sports/soccer/${L.s}/standings`, 900); }
   catch { if (S.tab === "tab"){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Classifica non raggiungibile", "Controlla la connessione e riprova.", true)}</div>`; stamp(); } return; }
   if (S.tab !== "tab") return;
   stamp(r.at, r.stale);
@@ -1313,7 +1326,7 @@ async function viewTab(){
   walk(r.data, L.n);
   if (!groups.length){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Classifica non ancora disponibile", "La fonte non pubblica ancora la tabella di " + esc(L.n) + ".")}</div>`; return; }
   const zones = groups.length === 1 ? (ZONES[L.s] || []) : [];
-  const favIds = new Set(FAVS.map(f => f.id).filter(Boolean)), used = new Set();
+  const favIds = new Set(FAVS.map(f => f.id).filter(Boolean).concat("u23")), used = new Set();
   const n = v => v == null || isNaN(v) ? "–" : v;
   const html = groups.map(g => {
     const rows = g.entries.map(e => { const st = {}; (e.stats || []).forEach(s => st[s.name] = s.value ?? +s.displayValue); return { t:e.team || {}, st }; })
@@ -1335,6 +1348,10 @@ async function viewTab(){
       <tbody>${body}</tbody></table></div></section>`;
   }).join("");
   const legend = used.size ? `<div class="legend">${[...used].map(k => `<span><i style="background:${ZINFO[k][1]}"></i>${ZINFO[k][0]}</span>`).join("")}</div>` : "";
+  if (L.s === "ita.3"){
+    $("#tbl").innerHTML = `<div class="sheet">${html}${legend}</div><p class="note">Girone C dell'Inter U23 · aggiornata ogni sera${r.upd ? " (ultima: " + esc(fmt(new Date(r.upd + "T12:00:00"), { day:"numeric", month:"long" })) + ")" : ""}.${r.notes ? " " + esc(r.notes) + "." : ""}<br>Ruota il telefono per vittorie, pareggi, sconfitte e gol.</p>`;
+    return;
+  }
   $("#tbl").innerHTML = `<div class="sheet">${html}${legend}</div><p class="note">Ruota il telefono per vedere vittorie, pareggi, sconfitte, gol e forma recente.</p>`;
   fillForm(L.s);
 }
@@ -1954,7 +1971,13 @@ document.addEventListener("click", async e => {
   const sp = e.target.closest("[data-sp]");
   if (sp){ const p = lastScorers[+sp.dataset.sp]; if (p && p.id) openPlayer(p); return; }
   /* tocco su una squadra (classifica o scheda partita): apre il suo calendario */
+  if (e.target.closest("[data-u23tab]")){ S.tab = "tab"; S.league = "ita.3"; save(); renderTabs(); renderRail(); render(); return; }
   const cal = e.target.closest("[data-cal]");
+  if (cal && cal.dataset.cal && cal.dataset.cal.startsWith("u23")){
+    e.stopPropagation();
+    if (cal.dataset.cal === "u23"){ S.tab = "mie"; S.fav = "u23"; save(); renderTabs(); render(); }
+    return;
+  }
   if (cal && cal.dataset.cal){
     e.stopPropagation();
     const id = cal.dataset.cal, sl = cal.dataset.sl, fav = FAVS.find(x => x.id === id);
