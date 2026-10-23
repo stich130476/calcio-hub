@@ -104,6 +104,8 @@ img{max-width:100%}
 .press:active{transform:translateY(1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 1px 3px rgba(0,0,0,.4)}
 .press[aria-current="true"]{background:linear-gradient(180deg,#4fa9ff 0%,#2563ff 100%);border-color:rgba(255,255,255,.38);color:#fff;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -2px 4px rgba(0,30,120,.35),0 5px 16px rgba(37,99,255,.55)}
+.ordbar{display:flex;justify-content:flex-end;margin:-2px 0 10px}
+.ordbar .seg button{padding:6px 14px;font-size:13px}
 .days{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:4px 16px 10px}
 .days::-webkit-scrollbar{display:none}
 .day{flex:none;min-width:60px;padding:7px 10px 8px;border-radius:15px;text-align:center}
@@ -1069,7 +1071,9 @@ async function viewOggi(){
   const days = [-2,-1,0,1,2,3,4,5,6];
   $("#view").innerHTML = header(L ? esc(L.n) : "Partite", L) +
     `<div class="days">${days.map(o => { const [a,b] = dayLabel(o); return `<button class="day press" data-d="${o}" aria-current="${S.day === o}"><span>${a}</span><b>${b}</b></button>`; }).join("")}</div>
+     ${!L ? `<div class="ordbar"><div class="seg" id="ord"><button class="press" data-ord="comp" aria-current="${store.get("ordOggi") !== "time"}">Per competizione</button><button class="press" data-ord="time" aria-current="${store.get("ordOggi") === "time"}">Per orario</button></div></div>` : ""}
      ${!L && S.day === 0 ? aoCard() : ""}<div id="list">${skel(4)}</div>`;
+  const ob = $("#ord"); if (ob) ob.addEventListener("click", e => { const b = e.target.closest("[data-ord]"); if (!b) return; store.set("ordOggi", b.dataset.ord); viewOggi(); });
   $("#view").querySelector(".days").addEventListener("click", e => { const b = e.target.closest(".day"); if (!b) return; S.day = +b.dataset.d; save(); viewOggi(); });
   const cur = $("#view").querySelector('.day[aria-current="true"]'); if (cur) cur.scrollIntoView({ inline:"center", block:"nearest" });
 
@@ -1090,6 +1094,10 @@ async function viewOggi(){
   let html;
   if (failed === list.length) html = `<div class="sheet">${emptyBox("Dati non raggiungibili", "Controlla la connessione: sul Wi‑Fi di casa prova con la rete dati.", true)}</div>`;
   else if (!shown.length) html = `<div class="sheet">${emptyBox("Nessuna partita", (L ? esc(L.n) + " non ha" : "Nessuna competizione ha") + " partite in questo giorno.")}</div>`;
+  else if (!L && store.get("ordOggi") === "time"){
+    const all = shown.flatMap(g => g.ms.map(m => ({ m, l:g.l }))).sort((a,b) => a.m.date - b.m.date || (LEAGUES.indexOf(a.l) - LEAGUES.indexOf(b.l)));
+    html = `<div class="sheet"><div class="rows">${all.map(x => matchRow(x.m, x.l, true)).join("")}</div></div>`;
+  }
   else html = `<div class="sheet">${favSection(shown)}${shown.map(g => `<section>${band(g.l, `<span class="count">${g.ms.length} ${g.ms.length === 1 ? "partita" : "partite"}</span>`)}
       <div class="rows">${g.ms.map(m => matchRow(m, g.l)).join("")}</div></section>`).join("")}</div>`;
   if (failed && failed < list.length) html += `<p class="note">${failed} competizioni non hanno risposto: riprova tra poco.</p>`;
