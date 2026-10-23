@@ -180,6 +180,8 @@ img{max-width:100%}
 .tag{display:inline-flex;align-items:center;gap:5px;margin-top:7px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.12);color:var(--fg2)}
 .tag.w{background:rgba(46,230,166,.18);color:#b6f8df} .tag.l{background:rgba(255,84,112,.18);color:#ffd0d8} .tag.live{background:rgba(46,230,107,.18);color:#d8ffe6}
 .card .foot{position:relative;margin-top:12px;font-size:12px;color:var(--mute);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u23d{font:700 12px var(--f-num);letter-spacing:.03em;color:var(--fg2);padding:12px 16px 0;display:flex;justify-content:space-between}
+.u23d span{color:var(--mute);font-weight:600}
 .seclbl{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--mute);margin:4px 2px -4px}
 
 /* Classifica */
@@ -1048,6 +1050,7 @@ async function viewOggi(){
   let at = Date.now(), stale = false, failed = 0;
   const groups = await Promise.all(list.map(async l => {
     try {
+      if (l.s === "ita.3"){ const u = await u23Matches(); return { l, ms:u.ms.filter(m => dayKey(m.date) === key) }; }
       const r = await getJSON(`${API}/site/v2/sports/soccer/${l.s}/scoreboard?dates=${key}`, ttl);
       at = Math.min(at, r.at); stale = stale || r.stale;
       return { l, ms:(r.data.events || []).map(e => norm(e, l.s)).filter(m => dayKey(m.date) === key).sort((a,b) => a.date - b.date) };
@@ -1069,7 +1072,7 @@ async function viewOggi(){
 /* "Le tue squadre": le partite delle preferite in cima, prima di tutto il resto */
 function favSection(groups){
   const ms = [];
-  const fav = t => isFavId(t.id) || FAVS.some(f => !f.id && (f.re.test(t.full) || f.re.test(t.name)));
+  const fav = t => t.id === "u23" || isFavId(t.id) || FAVS.some(f => !f.id && (f.re.test(t.full) || f.re.test(t.name)));
   for (const g of groups) for (const m of g.ms) if (fav(m.home) || fav(m.away)) ms.push({ m, l:g.l });
   if (!ms.length) return "";
   ms.sort((a,b) => a.m.date - b.m.date);
@@ -1080,7 +1083,7 @@ function matchRow(m, l, showComp){
   const ita = t => l.euro && ITA_RE.test(t.full) ? " ita" : "";
   const res = (t, o) => m.state === "post" && t.score != null && o.score != null && +t.score < +o.score ? " lose" : "";
   let mid;
-  if (m.state === "pre") mid = `<span class="pill pre">${timeOf(m.date)}</span>`;
+  if (m.state === "pre") mid = `<span class="pill pre">${m.tbd ? "—" : timeOf(m.date)}</span>`;
   else if (m.state === "ppd") mid = `<span class="pill pre">—</span><span class="st">Rinviata</span>`;
   else mid = `<span class="pill ${m.state}">${m.state === "in" ? '<span class="dot"></span>' : ""}${esc(m.home.score ?? "")} – ${esc(m.away.score ?? "")}</span><span class="st ${m.state === "in" ? "live" : ""}">${esc(statusIt(m))}</span>${extraBadge(m)}`;
   if (showComp) mid += `<span class="cmp">${leagueLogo(l.s) ? `<img src="${esc(leagueLogo(l.s))}" alt="">` : ""}${esc(l.n)}</span>`;
@@ -1088,6 +1091,62 @@ function matchRow(m, l, showComp){
     <div class="t h${ita(m.home)}${res(m.home, m.away)}"><span>${esc(m.home.name)}</span><span class="spot">${crest(m.home.logo, m.home.name)}</span></div>
     <div class="mid">${mid}</div>
     <div class="t${ita(m.away)}${res(m.away, m.home)}"><span class="spot">${crest(m.away.logo, m.away.name)}</span><span>${esc(m.away.name)}</span></div></div>`;
+}
+
+/* ---------- INTER U23 (Serie C) ----------
+   ESPN non pubblica la Serie C: calendario e risultati ufficiali vengono da inter.it
+   e stanno nel file u23.json accanto all'app, aggiornato ogni sera alle 19:30. */
+const U23 = { key:"u23", name:"Inter U23", id:"u23", logo:"https://a.espncdn.com/i/teamlogos/soccer/500/110.png" };
+const U23_URL = "https://stich130476.github.io/calcio-hub/u23.json";
+async function u23Logos(names){
+  const saved = store.get("u23logos") || {};
+  if (Date.now() - (saved._t || 0) < 30 * 864e5 && names.every(n => n in saved)) return saved;
+  const out = { _t: Date.now() };
+  const plain = x => (x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  await Promise.all(names.map(async n => {
+    try {
+      const r = await espnSearch(n);
+      const hit = r.teams.find(t => plain(t.name) === plain(n));   // solo nome identico: mai uno stemma sbagliato
+      out[n] = hit ? hit.logo : "";
+    } catch { out[n] = saved[n] || ""; }
+  }));
+  store.set("u23logos", out);
+  return out;
+}
+async function u23Matches(){
+  const { data, at, stale } = await getJSON(U23_URL, 600);
+  const ps = data.partite || [];
+  const names = [...new Set(ps.flatMap(p => [p.casa, p.ospite]).filter(n => n !== U23.name))];
+  const official = data.stemmi || {};
+  let logos = Object.assign({}, store.get("u23logos") || {}, official);
+  if (!names.every(n => n in logos)) u23Logos(names).then(() => { if (S.tab === "mie" && S.fav === "u23") viewMie(); });
+  const side = (n, sc) => n === U23.name
+    ? { id:"u23", name:n, full:n, logo:U23.logo, score:sc ?? null, so:null }
+    : { id:"u23:" + n, name:n, full:n, logo:logos[n] || "", score:sc ?? null, so:null };
+  const ms = ps.map(p => {
+    const done = p.gc != null && p.go != null;
+    return { id:"u23-" + p.g, g:p.g, date:new Date(p.d), slug:"ita.3", home:side(p.casa, p.gc), away:side(p.ospite, p.go),
+             state: done ? "post" : "pre", stName: done ? "STATUS_FULL_TIME" : "", detail:"", tbd: !p.ora, venue:"", note:"" };
+  }).sort((a,b) => a.date - b.date);
+  return { ms, at, stale, upd: data.aggiornato };
+}
+async function viewU23(){
+  let r;
+  try { r = await u23Matches(); }
+  catch { $("#favbody").innerHTML = `<div class="sheet">${emptyBox("Calendario non raggiungibile", "Controlla la connessione e riprova.", true)}</div>`; stamp(); return; }
+  if (S.tab !== "mie" || S.fav !== "u23") return;
+  stamp(r.at, r.stale);
+  const now = Date.now();
+  const last = r.ms.filter(m => m.state === "post").slice(-1)[0];
+  const next = r.ms.filter(m => m.state !== "post" && m.date.getTime() > now - 3 * 3600e3).slice(0, 3);
+  let html = "";
+  if (last) html += `<div class="seclbl">Ultima partita</div><div class="cards">${card(last, U23)}</div>`;
+  html += `<div class="seclbl">Prossime partite</div>` + (next.length ? `<div class="cards">${next.map(m => card(m, U23)).join("")}</div>`
+        : `<div class="sheet">${emptyBox("Nessuna partita in programma", "La stagione è terminata.")}</div>`);
+  html += `<div class="seclbl">Tutta la stagione · Serie C girone C</div><div class="sheet">${r.ms.map(m =>
+      `<div class="u23d">Giornata ${m.g}<span>${esc(fmt(m.date, { weekday:"short", day:"numeric", month:"short" }).replace(/\./g, ""))}${m.tbd ? " · orario da definire" : ""}</span></div>${matchRow(m, BY["ita.3"])}`).join("")}</div>
+    <p class="note" style="text-align:center;margin-top:12px">Calendario e risultati ufficiali di inter.it, aggiornati ogni sera.<br>Per la Serie C non esiste una fonte gratuita con la diretta.</p>`;
+  $("#favbody").innerHTML = html;
 }
 
 /* ---------- LE MIE ---------- */
@@ -1176,16 +1235,18 @@ async function viewMie(){
       <div style="text-align:center;padding-bottom:22px"><button class="press addbtn" data-edit>Aggiungi squadre</button></div></div>`;
     stamp(); return;
   }
-  if (!FAVS.some(f => f.key === S.fav)) S.fav = FAVS[0].key;
+  if (S.fav !== "u23" && !FAVS.some(f => f.key === S.fav)) S.fav = FAVS[0].key;
   $("#view").innerHTML = header("Le mie squadre") +
     `<div class="chips" id="chips">${FAVS.map(f => `<button class="chip press" data-f="${f.key}" aria-current="${S.fav === f.key}">${crest(f.logo || "", f.name)}${esc(f.name)}</button>`).join("")}
+       <button class="chip press" data-f="u23" aria-current="${S.fav === "u23"}">${crest(U23.logo, U23.name)}${esc(U23.name)}</button>
        <button class="chip press edit" data-edit aria-label="Modifica squadre preferite"><span class="ico">${ICONS.edit}</span>Modifica</button></div>
      <div id="favbody"><div class="cards"><div class="card"><div class="skel"></div></div><div class="card"><div class="skel"></div></div></div></div>`;
   $("#chips").addEventListener("click", e => { const b = e.target.closest(".chip"); if (!b || b.hasAttribute("data-edit")) return; S.fav = b.dataset.f; save(); viewMie(); });
   Promise.all(FAVS.map(resolveFav)).then(() => {
     if (S.tab !== "mie") return;
-    $("#chips").querySelectorAll(".chip").forEach(b => { const f = FAVS.find(x => x.key === b.dataset.f), c = b.querySelector(".crest"); if (f.logo && c && c.tagName !== "IMG") c.outerHTML = crest(f.logo, f.name); });
+    $("#chips").querySelectorAll(".chip").forEach(b => { const f = FAVS.find(x => x.key === b.dataset.f); if (!f) return; const c = b.querySelector(".crest"); if (f.logo && c && c.tagName !== "IMG") c.outerHTML = crest(f.logo, f.name); });
   });
+  if (S.fav === "u23") return viewU23();
   const f = await resolveFav(FAVS.find(x => x.key === S.fav) || FAVS[0]);
   if (S.tab !== "mie") return;
   const r = await teamMatches(f);
@@ -1213,7 +1274,7 @@ function card(m, f){
   let center, tag = "";
   const dshort = o => fmt(m.date, o).replace(/\./g, "");
   if (m.state === "pre"){
-    center = `<div class="date">${dshort({ weekday:"short", day:"numeric", month:"short" })}</div><div class="big">${timeOf(m.date)}</div>`;
+    center = `<div class="date">${dshort({ weekday:"short", day:"numeric", month:"short" })}</div><div class="big">${m.tbd ? "—" : timeOf(m.date)}</div>`;
     const dd = Math.round((keyDate(dayKey(m.date)) - keyDate(dayKey(new Date()))) / 864e5);
     tag = `<span class="tag">${dd === 0 ? "Oggi" : dd === 1 ? "Domani" : "Tra " + dd + " giorni"}</span>`;
   } else if (m.state === "ppd"){
@@ -1240,6 +1301,7 @@ function card(m, f){
 async function viewTab(){
   const L = BY[S.league] || BY["ita.1"];
   $("#view").innerHTML = header(esc(L.n), L) + `<div id="tbl">${skel(6)}</div>`;
+  if (L.s === "ita.3"){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Classifica non disponibile", "Della Serie C seguiamo l'Inter U23: calendario e risultati sono in Le mie › Inter U23.")}</div>`; stamp(); return; }
   if (L.cup){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Nessuna classifica", esc(L.n) + " si gioca a eliminazione diretta o senza una tabella unica.")}</div>`; stamp(); return; }
   let r;
   try { r = await getJSON(`${API}/v2/sports/soccer/${L.s}/standings`, 900); }
@@ -1527,12 +1589,12 @@ async function openMatch(slug, id, again){
   if (m.state === "in") evTimer = setTimeout(() => { mem.delete(`${API}/site/v2/sports/soccer/${slug}/summary?event=${id}`); try { localStorage.removeItem("c:" + `${API}/site/v2/sports/soccer/${slug}/summary?event=${id}`); } catch {} openMatch(slug, id, true); }, 20000);
 }
 document.addEventListener("click", e => {
-  const el = e.target.closest("[data-ev]"); if (!el || e.target.closest("#ov")) return;
+  const el = e.target.closest("[data-ev]"); if (!el || e.target.closest("#ov") || el.dataset.ev.startsWith("u23")) return;
   openMatch(el.dataset.sl, el.dataset.ev);
 });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") closeMatch();
-  if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-ev]")){ e.preventDefault(); openMatch(e.target.dataset.sl, e.target.dataset.ev); }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-ev]") && !e.target.dataset.ev.startsWith("u23")){ e.preventDefault(); openMatch(e.target.dataset.sl, e.target.dataset.ev); }
 });
 
 /* ---------- CALENDARIO COMPLETO DELLA SQUADRA ---------- */

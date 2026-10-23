@@ -1,0 +1,315 @@
+{
+ "squadra": "Inter U23",
+ "campionato": "Serie C · Girone C",
+ "stagione": "2026-27",
+ "fonte": "inter.it (calendario e risultati ufficiali)",
+ "aggiornato": "2026-10-23",
+ "partite": [
+  {
+   "g": 1,
+   "d": "2026-08-23T18:00:00+02:00",
+   "ora": true,
+   "casa": "Catania",
+   "ospite": "Inter U23",
+   "gc": 1,
+   "go": 2
+  },
+  {
+   "g": 2,
+   "d": "2026-08-29T21:00:00+02:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Altamura",
+   "gc": 1,
+   "go": 1
+  },
+  {
+   "g": 3,
+   "d": "2026-09-07T21:00:00+02:00",
+   "ora": true,
+   "casa": "Picerno",
+   "ospite": "Inter U23",
+   "gc": 4,
+   "go": 1
+  },
+  {
+   "g": 4,
+   "d": "2026-09-12T15:00:00+02:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Casertana",
+   "gc": 2,
+   "go": 3
+  },
+  {
+   "g": 5,
+   "d": "2026-09-15T18:30:00+02:00",
+   "ora": true,
+   "casa": "Crotone",
+   "ospite": "Inter U23",
+   "gc": 0,
+   "go": 2
+  },
+  {
+   "g": 6,
+   "d": "2026-09-20T15:00:00+02:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Foggia",
+   "gc": 3,
+   "go": 2
+  },
+  {
+   "g": 9,
+   "d": "2026-10-10T14:30:00+02:00",
+   "ora": true,
+   "casa": "Savoia",
+   "ospite": "Inter U23",
+   "gc": 2,
+   "go": 1
+  },
+  {
+   "g": 7,
+   "d": "2026-10-13T15:00:00+02:00",
+   "ora": true,
+   "casa": "Giugliano",
+   "ospite": "Inter U23",
+   "gc": 0,
+   "go": 4
+  },
+  {
+   "g": 10,
+   "d": "2026-10-17T14:30:00+02:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Monopoli",
+   "gc": 2,
+   "go": 4
+  },
+  {
+   "g": 11,
+   "d": "2026-10-24T14:30:00+02:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Sorrento"
+  },
+  {
+   "g": 8,
+   "d": "2026-10-27T14:30:00+01:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Scafatese"
+  },
+  {
+   "g": 12,
+   "d": "2026-11-01T12:30:00+01:00",
+   "ora": true,
+   "casa": "Cosenza",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 13,
+   "d": "2026-11-07T14:30:00+01:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Salernitana"
+  },
+  {
+   "g": 14,
+   "d": "2026-11-14T17:30:00+01:00",
+   "ora": true,
+   "casa": "Audace Cerignola",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 15,
+   "d": "2026-11-21T14:30:00+01:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Potenza"
+  },
+  {
+   "g": 16,
+   "d": "2026-11-29T12:30:00+01:00",
+   "ora": true,
+   "casa": "Barletta",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 17,
+   "d": "2026-12-05T14:30:00+01:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Bari"
+  },
+  {
+   "g": 18,
+   "d": "2026-12-12T14:30:00+01:00",
+   "ora": true,
+   "casa": "Cavese",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 19,
+   "d": "2026-12-20T12:30:00+01:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Casarano"
+  },
+  {
+   "g": 20,
+   "d": "2027-01-03T14:30:00+01:00",
+   "ora": true,
+   "casa": "Inter U23",
+   "ospite": "Catania"
+  },
+  {
+   "g": 21,
+   "d": "2027-01-10T12:00:00+01:00",
+   "ora": false,
+   "casa": "Altamura",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 22,
+   "d": "2027-01-17T12:00:00+01:00",
+   "ora": false,
+   "casa": "Inter U23",
+   "ospite": "Picerno"
+  },
+  {
+   "g": 23,
+   "d": "2027-01-24T12:00:00+01:00",
+   "ora": false,
+   "casa": "Casertana",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 24,
+   "d": "2027-01-31T12:00:00+01:00",
+   "ora": false,
+   "casa": "Inter U23",
+   "ospite": "Crotone"
+  },
+  {
+   "g": 25,
+   "d": "2027-02-07T12:00:00+01:00",
+   "ora": false,
+   "casa": "Foggia",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 26,
+   "d": "2027-02-10T12:00:00+01:00",
+   "ora": false,
+   "casa": "Inter U23",
+   "ospite": "Giugliano"
+  },
+  {
+   "g": 27,
+   "d": "2027-02-14T12:00:00+01:00",
+   "ora": false,
+   "casa": "Scafatese",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 28,
+   "d": "2027-02-21T12:00:00+01:00",
+   "ora": false,
+   "casa": "Inter U23",
+   "ospite": "Savoia"
+  },
+  {
+   "g": 29,
+   "d": "2027-02-28T12:00:00+01:00",
+   "ora": false,
+   "casa": "Monopoli",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 30,
+   "d": "2027-03-03T12:00:00+01:00",
+   "ora": false,
+   "casa": "Sorrento",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 31,
+   "d": "2027-03-07T12:00:00+01:00",
+   "ora": false,
+   "casa": "Inter U23",
+   "ospite": "Cosenza"
+  },
+  {
+   "g": 32,
+   "d": "2027-03-14T12:00:00+01:00",
+   "ora": false,
+   "casa": "Salernitana",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 33,
+   "d": "2027-03-21T12:00:00+01:00",
+   "ora": false,
+   "casa": "Inter U23",
+   "ospite": "Audace Cerignola"
+  },
+  {
+   "g": 34,
+   "d": "2027-03-27T12:00:00+01:00",
+   "ora": false,
+   "casa": "Potenza",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 35,
+   "d": "2027-04-04T12:00:00+02:00",
+   "ora": false,
+   "casa": "Inter U23",
+   "ospite": "Barletta"
+  },
+  {
+   "g": 36,
+   "d": "2027-04-11T12:00:00+02:00",
+   "ora": false,
+   "casa": "Bari",
+   "ospite": "Inter U23"
+  },
+  {
+   "g": 37,
+   "d": "2027-04-18T12:00:00+02:00",
+   "ora": false,
+   "casa": "Inter U23",
+   "ospite": "Cavese"
+  },
+  {
+   "g": 38,
+   "d": "2027-04-25T12:00:00+02:00",
+   "ora": false,
+   "casa": "Casarano",
+   "ospite": "Inter U23"
+  }
+ ],
+ "stemmi": {
+  "Altamura": "https://images.fotmob.com/image_resources/logo/teamlogo/867623.png",
+  "Audace Cerignola": "https://images.fotmob.com/image_resources/logo/teamlogo/867620.png",
+  "Bari": "https://images.fotmob.com/image_resources/logo/teamlogo/9976.png",
+  "Barletta": "https://images.fotmob.com/image_resources/logo/teamlogo/145014.png",
+  "Casarano": "https://images.fotmob.com/image_resources/logo/teamlogo/6460.png",
+  "Casertana": "https://images.fotmob.com/image_resources/logo/teamlogo/277990.png",
+  "Catania": "https://images.fotmob.com/image_resources/logo/teamlogo/8530.png",
+  "Cavese": "https://images.fotmob.com/image_resources/logo/teamlogo/6063.png",
+  "Cosenza": "https://images.fotmob.com/image_resources/logo/teamlogo/6456.png",
+  "Crotone": "https://images.fotmob.com/image_resources/logo/teamlogo/9884.png",
+  "Foggia": "https://images.fotmob.com/image_resources/logo/teamlogo/6466.png",
+  "Giugliano": "https://images.fotmob.com/image_resources/logo/teamlogo/6040.png",
+  "Monopoli": "https://images.fotmob.com/image_resources/logo/teamlogo/189506.png",
+  "Picerno": "https://images.fotmob.com/image_resources/logo/teamlogo/674807.png",
+  "Potenza": "https://images.fotmob.com/image_resources/logo/teamlogo/6099.png",
+  "Salernitana": "https://images.fotmob.com/image_resources/logo/teamlogo/6480.png",
+  "Savoia": "https://images.fotmob.com/image_resources/logo/teamlogo/6474.png",
+  "Scafatese": "https://images.fotmob.com/image_resources/logo/teamlogo/189505.png",
+  "Sorrento": "https://images.fotmob.com/image_resources/logo/teamlogo/88998.png"
+ },
+ "fonte_stemmi": "FotMob"
+}
