@@ -299,7 +299,7 @@ body.lock .main{overflow:hidden}
 .luseg .seg{align-self:center}
 .luseg .seg button{padding:6px 16px;font-size:13px}
 .lupitch[hidden],.lulist[hidden]{display:none!important}
-.pitch{position:relative;margin:10px 12px 12px;aspect-ratio:68/122;border-radius:16px;overflow:hidden;
+.pitch{position:relative;margin:10px 12px 12px;aspect-ratio:68/128;border-radius:16px;overflow:hidden;
   background:repeating-linear-gradient(180deg,rgba(46,160,96,.30) 0 9.09%,rgba(46,160,96,.20) 9.09% 18.18%),linear-gradient(180deg,#0f3a2a,#0b2f22);
   border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 0 40px rgba(0,0,0,.35)}
 .pitch .ln{position:absolute;border:1.5px solid rgba(255,255,255,.28);pointer-events:none}
@@ -312,14 +312,16 @@ body.lock .main{overflow:hidden}
 .pitch .tl{position:absolute;left:10px;display:flex;align-items:center;gap:6px;font:800 12px var(--f-num);color:rgba(255,255,255,.85);z-index:2}
 .pitch .tl.t{top:8px}.pitch .tl.b{bottom:8px}
 .pitch .tl .crest{width:18px;height:18px}
-.pl{position:absolute;width:64px;margin-left:-32px;margin-top:-24px;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:1}
-.pl .hs{width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:50% 15%;border:1.5px solid rgba(255,255,255,.75);
-  background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.30),rgba(255,255,255,.08));box-shadow:0 2px 6px rgba(0,0,0,.4)}
-.pl .hs.ph{display:grid;place-items:center;font:700 11px var(--f-num);color:#fff;background:var(--plc,rgba(255,255,255,.18))}
-.pl b{font:700 10.5px var(--f-num);color:#fff;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.7)}
-.pl b em{font-style:normal;color:rgba(255,255,255,.7);margin-right:3px}
-.pl .sb{position:absolute;top:-2px;right:12px;font-size:9px;line-height:1;padding:2px 3px;border-radius:5px;background:rgba(0,0,0,.55)}
-.pl .sb.out{color:#ff8a8a}.pl .sb.in{color:#7dffa8}
+.pitch .pl{--hsz:44px;position:absolute;width:64px;margin-left:-32px;margin-top:calc(var(--hsz) / -2 - 2px);display:flex;flex-direction:column;align-items:center;gap:2px;z-index:1;padding:0;border:0;background:none}
+.pitch.dense .pl{--hsz:38px}
+.pitch .pl .hw{width:var(--hsz);height:var(--hsz);border-radius:50%;overflow:hidden;flex:none;border:2px solid rgba(255,255,255,.9);
+  background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.55),rgba(255,255,255,.18));box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.pitch .pl .hw .hs{display:block;width:100%;height:100%;border:0;border-radius:0;object-fit:cover;object-position:50% 0;transform:scale(1.4);transform-origin:50% 16%}
+.pitch .pl .hw .hs.ph{display:grid;place-items:center;transform:none;font:700 12px var(--f-num);color:#fff;background:var(--plc,rgba(255,255,255,.18))}
+.pitch .pl b{font:700 11px/1.15 var(--f-num);color:#fff;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.pitch .pl b em{font-style:normal;color:rgba(255,255,255,.7);margin-right:3px}
+.pitch .pl .sb{position:absolute;top:-3px;right:6px;font-size:9px;line-height:1;padding:2px 3px;border-radius:5px;background:rgba(0,0,0,.6);z-index:2}
+.pitch .pl .sb.out{color:#ff8a8a}.pitch .pl .sb.in{color:#7dffa8}
 .lu{display:grid;grid-template-columns:1fr 1fr}
 .lu > div{min-width:0}
 .lu > div + div{border-left:1px solid var(--line)}
@@ -1905,15 +1907,15 @@ function pitchHtml(rH, rA, m){
   const surname = a => { const n = a.shortName || a.displayName || ""; const w = n.split(" "); return w.length > 1 && /\./.test(w[0]) ? w.slice(1).join(" ") : (a.lastName || w[w.length - 1] || n); };
   const one = (p, x, y, col) => {
     const a = p.athlete || {}, sb = p.subbedOut ? `<span class="sb out">▼</span>` : p.subbedIn ? `<span class="sb in">▲</span>` : "";
-    return `<div class="pl" style="left:${x}%;top:${y}%;--plc:${col}">${faceImg(a.id, a.displayName || "", "hs")}${sb}<b><em>${esc(p.jersey || "")}</em>${esc(surname(a))}</b></div>`;
+    return `<div class="pl" style="left:${x}%;top:${y}%;--plc:${col}"><span class="hw">${faceImg(a.id, a.displayName || "", "hs")}</span>${sb}<b><em>${esc(p.jersey || "")}</em>${esc(surname(a))}</b></div>`;
   };
   const col = t => t.color && /^[0-9a-f]{6}$/i.test(t.color) && !/^(ffffff|000000)$/i.test(t.color) ? "#" + t.color + "aa" : "rgba(255,255,255,.18)";
   // casa in basso (attacca verso l'alto), ospiti in alto (attaccano verso il basso, sinistra/destra specchiate)
   const half = (L, bottom, c) => L.map((ln, k) => {
-    const y = bottom ? 91 - k * (36 / (L.length - 1)) : 6 + k * (36 / (L.length - 1));
+    const y = bottom ? 92 - k * (38 / (L.length - 1)) : 5 + k * (38 / (L.length - 1));
     return ln.map((p, j) => { let x = (j + 0.5) * 100 / ln.length; if (!bottom) x = 100 - x; x = 5 + x * 0.9; return one(p, x, y, c); }).join("");
   }).join("");
-  return `<div class="pitch">
+  return `<div class="pitch${Math.max(LH.length, LA.length) > 5 ? " dense" : ""}">
     <div class="ln half"></div><div class="ln cc"></div><div class="ln box t"></div><div class="ln box b"></div><div class="ln sbox t"></div><div class="ln sbox b"></div>
     <div class="tl t">${crest(m.away.logo, m.away.name)}${esc(rA.formation || "")}</div><div class="tl b">${crest(m.home.logo, m.home.name)}${esc(rH.formation || "")}</div>
     ${half(LA, false, col(m.away))}${half(LH, true, col(m.home))}</div>`;
