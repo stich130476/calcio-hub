@@ -203,6 +203,7 @@ td.pts{font:800 17px var(--f-num);color:var(--fg);padding-right:12px}
 td.dr.p{color:#9ff2cf} td.dr.n{color:#ffb3c0}
 tr.fav td{background:rgba(255,201,77,.09)}
 tr.fav .tm span{color:var(--gold)}
+tr.itr .tm > span:not(.spot){color:var(--gold)}
 .x{display:none}
 .legend{display:flex;flex-wrap:wrap;gap:8px 16px;padding:11px 14px 14px;font-size:12px;color:var(--fg2);border-top:1px solid var(--line)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
@@ -1335,7 +1336,8 @@ async function viewTab(){
       const pos = x.st.rank || i + 1, z = zones.find(([a,b]) => pos >= a && pos <= b); if (z) used.add(z[2]);
       const logo = (x.t.logos && x.t.logos[0] && x.t.logos[0].href) || x.t.logo || "";
       const dr = x.st.pointDifferential ?? ((x.st.pointsFor ?? 0) - (x.st.pointsAgainst ?? 0));
-      return `<tr class="${favIds.has(String(x.t.id)) ? "fav" : ""}" data-cal="${esc(String(x.t.id))}" data-sl="${esc(L.s)}" data-nm="${esc(x.t.displayName || "")}" data-lg="${esc(logo)}">
+      const itr = L.euro && ITA_RE.test(x.t.displayName || "") ? " itr" : "";
+      return `<tr class="${favIds.has(String(x.t.id)) ? "fav" : ""}${itr}" data-cal="${esc(String(x.t.id))}" data-sl="${esc(L.s)}" data-nm="${esc(x.t.displayName || "")}" data-lg="${esc(logo)}">
         <td class="pos"><span class="rk${z ? " z" : ""}" style="--zc:${z ? ZINFO[z[2]][1] : "transparent"}">${pos}</span></td>
         <td class="l"><div class="tm"><span class="spot">${crest(logo, x.t.displayName)}</span><span>${esc(x.t.shortDisplayName || x.t.displayName)}</span></div></td>
         <td>${n(x.st.gamesPlayed)}</td><td class="x">${n(x.st.wins)}</td><td class="x">${n(x.st.ties)}</td><td class="x">${n(x.st.losses)}</td>
