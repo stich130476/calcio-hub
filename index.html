@@ -292,6 +292,32 @@ body.lock .main{overflow:hidden}
 .bars i{display:block;height:6px;border-radius:3px}
 .bars .bh{background:linear-gradient(90deg,#2f6bff,#4fa9ff)} .bars .ba{background:linear-gradient(90deg,#b98bff,#8b3dff)}
 .bars .lo{opacity:.4}
+/* Formazioni schierate in campo */
+.luseg{display:flex;justify-content:center;padding:10px 0 2px}
+.luseg .seg{align-self:center}
+.luseg .seg button{padding:6px 16px;font-size:13px}
+.lupitch[hidden],.lulist[hidden]{display:none!important}
+.pitch{position:relative;margin:10px 12px 12px;aspect-ratio:68/122;border-radius:16px;overflow:hidden;
+  background:repeating-linear-gradient(180deg,rgba(46,160,96,.30) 0 9.09%,rgba(46,160,96,.20) 9.09% 18.18%),linear-gradient(180deg,#0f3a2a,#0b2f22);
+  border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 0 40px rgba(0,0,0,.35)}
+.pitch .ln{position:absolute;border:1.5px solid rgba(255,255,255,.28);pointer-events:none}
+.pitch .half{left:0;right:0;top:50%;height:0;border-width:1.5px 0 0}
+.pitch .cc{left:50%;top:50%;width:26%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%)}
+.pitch .box{left:22%;right:22%;height:15%}
+.pitch .box.t{top:-2px;border-top:0}.pitch .box.b{bottom:-2px;border-bottom:0}
+.pitch .sbox{left:37%;right:37%;height:5.5%}
+.pitch .sbox.t{top:-2px;border-top:0}.pitch .sbox.b{bottom:-2px;border-bottom:0}
+.pitch .tl{position:absolute;left:10px;display:flex;align-items:center;gap:6px;font:800 12px var(--f-num);color:rgba(255,255,255,.85);z-index:2}
+.pitch .tl.t{top:8px}.pitch .tl.b{bottom:8px}
+.pitch .tl .crest{width:18px;height:18px}
+.pl{position:absolute;width:64px;margin-left:-32px;margin-top:-24px;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:1}
+.pl .hs{width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:50% 15%;border:1.5px solid rgba(255,255,255,.75);
+  background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.30),rgba(255,255,255,.08));box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.pl .hs.ph{display:grid;place-items:center;font:700 11px var(--f-num);color:#fff;background:var(--plc,rgba(255,255,255,.18))}
+.pl b{font:700 10.5px var(--f-num);color:#fff;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.pl b em{font-style:normal;color:rgba(255,255,255,.7);margin-right:3px}
+.pl .sb{position:absolute;top:-2px;right:12px;font-size:9px;line-height:1;padding:2px 3px;border-radius:5px;background:rgba(0,0,0,.55)}
+.pl .sb.out{color:#ff8a8a}.pl .sb.in{color:#7dffa8}
 .lu{display:grid;grid-template-columns:1fr 1fr}
 .lu > div{min-width:0}
 .lu > div + div{border-left:1px solid var(--line)}
@@ -1591,8 +1617,12 @@ async function openMatch(slug, id, again){
       }).join("");
     };
     const head = (rr, t) => `<div class="fm">${crest(t.logo, t.name)}${esc(rr.formation || "")}</div>`;
+    const pitch = pitchHtml(rH, rA, m);
+    const mode = pitch && store.get("luMode") !== "list" ? "pitch" : "list";
     html += `<div class="blk"><h3>Formazioni</h3><div class="sheet">
-      <div class="lu"><div>${head(rH, m.home)}${col2(rH, m.home, true)}</div><div>${head(rA, m.away)}${col2(rA, m.away, true)}</div></div>
+      ${pitch ? `<div class="luseg"><div class="seg" data-lumode><button class="press" data-lm="pitch" aria-current="${mode === "pitch"}">Campo</button><button class="press" data-lm="list" aria-current="${mode === "list"}">Elenco</button></div></div>
+      <div class="lupitch"${mode === "pitch" ? "" : " hidden"}>${pitch}</div>` : ""}
+      <div class="lu lulist"${mode === "list" ? "" : " hidden"}><div>${head(rH, m.home)}${col2(rH, m.home, true)}</div><div>${head(rA, m.away)}${col2(rA, m.away, true)}</div></div>
       <details class="bench"><summary>Panchina</summary><div class="lu"><div>${col2(rH, m.home, false)}</div><div>${col2(rA, m.away, false)}</div></div></details>
     </div></div>`;
   }
@@ -1770,6 +1800,15 @@ async function openPlayer(p){
         <div class="phteam" ${p.teamId ? `data-cal="${esc(p.teamId)}" data-sl="${esc(p.slug || "")}" data-nm="${esc(p.team)}" data-lg="${esc(p.teamLogo || "")}" role="button"` : ""}>${p.teamLogo ? crest(p.teamLogo, p.team) : ""}<span>${esc(p.team || "")}</span></div></div></div>
     ${facts.length ? `<div class="sheet facts">${facts.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
     <div id="pstats"><div class="sheet" style="margin-top:12px"><div class="skel"></div><div class="skel"></div></div></div>`;
+  wikiFace(p).then(u => {
+    if (!u) return;
+    const bf = body.querySelector(".bigface"); if (!bf) return;
+    const cur = bf.querySelector("img.hs");
+    if (cur && cur.complete && cur.naturalWidth > 0) return;            // c'è già la foto ESPN
+    const im = new Image(); im.className = "hs"; im.alt = "";
+    im.onload = () => { const f2 = body.querySelector(".bigface"); if (f2 && !(f2.querySelector("img.hs") && f2.querySelector("img.hs").naturalWidth > 0)) f2.innerHTML = "", f2.appendChild(im); };
+    im.src = u;
+  });
   const home = p.slug && !/friendly/.test(p.slug) ? p.slug : null;
   let slugs = [home, ...(CUPS[home] || []), ...UEFA_CUPS].filter(Boolean);
   const memo = [...seasonMemo.entries()].find(([k]) => k.startsWith((p.teamId || "?") + "|"));
@@ -1800,6 +1839,92 @@ async function openPlayer(p){
     </tbody></table></div></div><p class="note" style="text-align:center;margin-top:12px">Ruota il telefono per tiri e precisione nei passaggi.</p>`;
 }
 const posIt = s => ({ Goalkeeper:"Portiere", Defender:"Difensore", Midfielder:"Centrocampista", Forward:"Attaccante" }[s] || s);
+
+/* ---------- Formazioni in campo: modulo ESPN (es. 4-2-3-1) + ruolo di ogni titolare ----------
+   Se il modulo manca o non torna con i titolari, si resta all'elenco. */
+function lineOf(ab){
+  const a = (ab || "").toUpperCase();
+  if (a === "G" || a === "GK") return 0;
+  if (/WB/.test(a)) return 1.5;
+  if (/^(LB|RB|CB|CD|SW|D)\b|^CD-|^CB-/.test(a)) return 1;
+  if (/^DM/.test(a)) return 2;
+  if (/^(AM)/.test(a)) return 4;
+  if (/^(LW|RW|W)\b|^LW|^RW/.test(a)) return 4.5;
+  if (/^(F|CF|ST|S)\b|^CF-|^ST-|^F-/.test(a)) return 6;
+  if (/^(CM|M|LM|RM)\b|^CM-|^M-/.test(a)) return 3;
+  return 3;
+}
+function sideOf(ab){
+  const a = (ab || "").toUpperCase();
+  if (/-L$|^L/.test(a)) return -1;
+  if (/-R$|^R/.test(a)) return 1;
+  return 0;
+}
+function pitchLines(rr){
+  const f = String(rr.formation || "").match(/\d/g);
+  const st = (rr.roster || []).filter(p => p.starter);
+  if (!f || st.length !== 11) return null;
+  const counts = [1, ...f.map(Number)];
+  if (counts.reduce((a,b) => a + b, 0) !== 11) return null;
+  const ab = p => (p.position && (p.position.abbreviation || p.position.name)) || "";
+  const fp = p => +p.formationPlace || 99;
+  const sorted = st.slice().sort((a,b) => lineOf(ab(a)) - lineOf(ab(b)) || fp(a) - fp(b));
+  if (lineOf(ab(sorted[0])) !== 0) return null;          // senza un portiere riconosciuto non si disegna
+  const lines = []; let i = 0;
+  for (const c of counts){ lines.push(sorted.slice(i, i + c).sort((a,b) => sideOf(ab(a)) - sideOf(ab(b)) || fp(a) - fp(b))); i += c; }
+  return lines;
+}
+function pitchHtml(rH, rA, m){
+  const LH = pitchLines(rH), LA = pitchLines(rA);
+  if (!LH || !LA) return "";
+  const surname = a => { const n = a.shortName || a.displayName || ""; const w = n.split(" "); return w.length > 1 && /\./.test(w[0]) ? w.slice(1).join(" ") : (a.lastName || w[w.length - 1] || n); };
+  const one = (p, x, y, col) => {
+    const a = p.athlete || {}, sb = p.subbedOut ? `<span class="sb out">▼</span>` : p.subbedIn ? `<span class="sb in">▲</span>` : "";
+    return `<div class="pl" style="left:${x}%;top:${y}%;--plc:${col}">${faceImg(a.id, a.displayName || "", "hs")}${sb}<b><em>${esc(p.jersey || "")}</em>${esc(surname(a))}</b></div>`;
+  };
+  const col = t => t.color && /^[0-9a-f]{6}$/i.test(t.color) && !/^(ffffff|000000)$/i.test(t.color) ? "#" + t.color + "aa" : "rgba(255,255,255,.18)";
+  // casa in basso (attacca verso l'alto), ospiti in alto (attaccano verso il basso, sinistra/destra specchiate)
+  const half = (L, bottom, c) => L.map((ln, k) => {
+    const y = bottom ? 91 - k * (36 / (L.length - 1)) : 6 + k * (36 / (L.length - 1));
+    return ln.map((p, j) => { let x = (j + 0.5) * 100 / ln.length; if (!bottom) x = 100 - x; x = 5 + x * 0.9; return one(p, x, y, c); }).join("");
+  }).join("");
+  return `<div class="pitch">
+    <div class="ln half"></div><div class="ln cc"></div><div class="ln box t"></div><div class="ln box b"></div><div class="ln sbox t"></div><div class="ln sbox b"></div>
+    <div class="tl t">${crest(m.away.logo, m.away.name)}${esc(rA.formation || "")}</div><div class="tl b">${crest(m.home.logo, m.home.name)}${esc(rH.formation || "")}</div>
+    ${half(LA, false, col(m.away))}${half(LH, true, col(m.home))}</div>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-lm]"); if (!b) return;
+  const blk = b.closest(".blk"); if (!blk) return;
+  const mode = b.dataset.lm; store.set("luMode", mode);
+  blk.querySelectorAll("[data-lm]").forEach(x => x.setAttribute("aria-current", String(x === b)));
+  const pi = blk.querySelector(".lupitch"), li = blk.querySelector(".lulist");
+  if (pi) pi.hidden = mode !== "pitch"; if (li) li.hidden = mode !== "list";
+});
+
+/* ---------- Foto dei giocatori da Wikipedia (quando ESPN non ce l'ha) ----------
+   Si accetta solo una pagina di calciatore che contenga nome e squadra: meglio le iniziali che una foto sbagliata. */
+async function wikiFace(p){
+  const key = "wp:" + p.id, c = store.get(key);
+  if (c && Date.now() - c.t < 30 * 864e5) return c.u;
+  const plain = x => (x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const nameW = plain(p.name).split(/[\s-]+/).filter(w => w.length > 1);
+  const teamW = plain(p.team || "").replace(/\b(fc|cf|ac|as|sc|afc|ssc|club|calcio|de|of|the|u23|u21)\b/g, " ").split(/\s+/).filter(w => w.length > 2).sort((a,b) => b.length - a.length)[0] || "";
+  const teamQ = ({ internazionale:"inter" })[teamW] || teamW;
+  let url = null;
+  for (const [lang, word, re] of [["en", "footballer", /footballer|soccer player/i], ["it", "calciatore", /calciator/i]]){
+    try {
+      const q = `${p.name} ${teamQ} ${word}`.trim();
+      const r = await fetch(`https://${lang}.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=3&prop=pageimages|description&piprop=thumbnail&pithumbsize=320`);
+      const d = await r.json();
+      const pages = Object.values((d.query || {}).pages || {}).sort((a,b) => a.index - b.index);
+      const hit = pages.find(pg => re.test(pg.description || "") && nameW.some(w => plain(pg.title).includes(w)) && pg.thumbnail);
+      if (hit){ url = hit.thumbnail.source; break; }
+    } catch {}
+  }
+  store.set(key, { t:Date.now(), u:url });
+  return url;
+}
 
 /* ---------- PREFERITE: aggiungi, togli, riordina ---------- */
 function toggleFav(t){
@@ -1838,12 +1963,12 @@ async function teamsIndex(){
   return list;
 }
 /* Elenco giocatori: dalle rose delle squadre dei campionati principali (costruito una volta a settimana) */
-const ROSTER_LEAGUES = ["ita.1","eng.1","esp.1","ger.1","fra.1","ita.2","sco.1","ned.1","bel.1"];
+const ROSTER_LEAGUES = ["ita.1","eng.1","esp.1","ger.1","fra.1","ita.2","sco.1","ned.1","bel.1","uefa.champions","uefa.europa","uefa.europa.conf"];
 let pidxBuilding = null, pidxProg = null;
 function playersIndex(onProg){
   if (playersIdx) return Promise.resolve(playersIdx);
   const c = store.get("pidx");
-  if (c && Date.now() - c.t < 7 * 864e5 && c.v && c.v.length > 300) return Promise.resolve(playersIdx = c.v);
+  if (c && c.ver === 2 && Date.now() - c.t < 7 * 864e5 && c.v && c.v.length > 300) return Promise.resolve(playersIdx = c.v);
   if (onProg) pidxProg = onProg;
   if (pidxBuilding) return pidxBuilding;
   pidxBuilding = (async () => {
@@ -1860,7 +1985,7 @@ function playersIndex(onProg){
       }));
       if (pidxProg) pidxProg(done, teams.length);
     }
-    if (out.length > 300){ store.set("pidx", { t:Date.now(), v:out }); playersIdx = out; }
+    if (out.length > 300){ store.set("pidx", { t:Date.now(), ver:2, v:out }); playersIdx = out; }
     pidxBuilding = null;
     return out;
   })();
@@ -1905,7 +2030,7 @@ async function runSearch(q, box, mode){
   box.innerHTML = `<div class="sheet"><div class="skel"></div><div class="skel"></div></div>`;
   const words = s.split(/\s+/);
   const hit = txt => { const n = nz(txt); return words.every(w => n.includes(w)); };
-  const ready = !!playersIdx || !!(store.get("pidx") || {}).v;
+  const ready = !!playersIdx || ((store.get("pidx") || {}).ver === 2 && !!(store.get("pidx") || {}).v);
   const [local, remote, pls] = await Promise.all([teamsIndex(), espnSearch(q.trim()), mode !== "add" && ready ? playersIndex() : Promise.resolve([])]);
   if (seq !== searchSeq) return;
   const teams = new Map();
