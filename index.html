@@ -1905,7 +1905,7 @@ document.addEventListener("click", e => {
 /* ---------- Foto dei giocatori da Wikipedia (quando ESPN non ce l'ha) ----------
    Si accetta solo una pagina di calciatore che contenga nome e squadra: meglio le iniziali che una foto sbagliata. */
 async function wikiFace(p){
-  const key = "wp:" + p.id, c = store.get(key);
+  const key = "wp2:" + p.id, c = store.get(key);
   if (c && Date.now() - c.t < 30 * 864e5) return c.u;
   const plain = x => (x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const nameW = plain(p.name).split(/[\s-]+/).filter(w => w.length > 1);
@@ -1915,11 +1915,21 @@ async function wikiFace(p){
   for (const [lang, word, re] of [["en", "footballer", /footballer|soccer player/i], ["it", "calciatore", /calciator/i]]){
     try {
       const q = `${p.name} ${teamQ} ${word}`.trim();
-      const r = await fetch(`https://${lang}.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=3&prop=pageimages|description&piprop=thumbnail&pithumbsize=320`);
+      const r = await fetch(`https://${lang}.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=5&prop=pageimages|description&piprop=thumbnail&pithumbsize=320`);
       const d = await r.json();
       const pages = Object.values((d.query || {}).pages || {}).sort((a,b) => a.index - b.index);
-      const hit = pages.find(pg => re.test(pg.description || "") && nameW.some(w => plain(pg.title).includes(w)) && pg.thumbnail);
-      if (hit){ url = hit.thumbnail.source; break; }
+      // omonimi (es. due "Pedrinho" nello Shakhtar): si decide con l'anno di nascita, altrimenti niente foto
+      const cands = pages.filter(pg => re.test(pg.description || "") && nameW.some(w => plain(pg.title).includes(w)));
+      const born = p.age ? [new Date().getFullYear() - p.age - 1, new Date().getFullYear() - p.age] : null;
+      const yearsOf = pg => ((pg.title + " " + (pg.description || "")).match(/\b(19[6-9]\d|20[0-2]\d)\b/g) || []).map(Number);
+      let hit = null;
+      if (born){
+        const withYear = cands.filter(pg => yearsOf(pg).some(y => born.includes(y)));
+        const contra = cands.filter(pg => yearsOf(pg).length && !yearsOf(pg).some(y => born.includes(y)));
+        hit = withYear[0] || (cands.length === 1 && !contra.length ? cands[0] : null);
+      } else if (cands.length === 1) hit = cands[0];
+      if (hit && hit.thumbnail){ url = hit.thumbnail.source; break; }
+      if (cands.length) break;                         // trovato ma ambiguo o senza foto: non provare altre lingue
     } catch {}
   }
   store.set(key, { t:Date.now(), u:url });
