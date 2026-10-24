@@ -1918,15 +1918,15 @@ function pitchHtml(rH, rA, m){
     return `<div class="pl" style="left:${x}%;top:${y}%;--plc:${col}" data-pid="${esc(String(a.id || ""))}" data-pn="${esc(a.displayName || "")}" data-tm="${esc(t.full || t.name || "")}" data-tid="${esc(t.id || "")}" data-sl="${esc(m.slug || "")}"><span class="hw">${pitchFace(a)}</span>${sb}<b><em>${esc(p.jersey || "")}</em>${esc(surname(a))}</b></div>`;
   };
   const col = t => t.color && /^[0-9a-f]{6}$/i.test(t.color) && !/^(ffffff|000000)$/i.test(t.color) ? "#" + t.color + "aa" : "rgba(255,255,255,.18)";
-  // casa in basso (attacca verso l'alto), ospiti in alto (attaccano verso il basso, sinistra/destra specchiate)
+  // casa in alto (attacca verso il basso, sinistra/destra specchiate), ospiti in basso: come FotMob, Sofascore e le app più diffuse
   const half = (L, bottom, c, t) => L.map((ln, k) => {
     const y = bottom ? 92 - k * (38 / (L.length - 1)) : 5 + k * (38 / (L.length - 1));
     return ln.map((p, j) => { let x = (j + 0.5) * 100 / ln.length; if (!bottom) x = 100 - x; x = 5 + x * 0.9; return one(p, x, y, c, t); }).join("");
   }).join("");
   return `<div class="pitch${Math.max(LH.length, LA.length) > 5 ? " dense" : ""}">
     <div class="ln half"></div><div class="ln cc"></div><div class="ln box t"></div><div class="ln box b"></div><div class="ln sbox t"></div><div class="ln sbox b"></div>
-    <div class="tl t">${crest(m.away.logo, m.away.name)}${esc(rA.formation || "")}</div><div class="tl b">${crest(m.home.logo, m.home.name)}${esc(rH.formation || "")}</div>
-    ${half(LA, false, col(m.away), m.away)}${half(LH, true, col(m.home), m.home)}</div>`;
+    <div class="tl t">${crest(m.home.logo, m.home.name)}${esc(rH.formation || "")}</div><div class="tl b">${crest(m.away.logo, m.away.name)}${esc(rA.formation || "")}</div>
+    ${half(LH, false, col(m.home), m.home)}${half(LA, true, col(m.away), m.away)}</div>`;
 }
 /* Foto sul campo: prima ESPN; se ESPN non ce l'ha, Wikipedia (stessi controlli della scheda giocatore) */
 const NOH = new Set(store.get("noh") || []);
