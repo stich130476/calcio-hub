@@ -1448,9 +1448,16 @@ async function scorers(L){
 }
 async function assists(L, season){
   const year = season.year || (new Date().getMonth() >= 6 ? new Date().getFullYear() : new Date().getFullYear() - 1);
-  const type = (season.type && (season.type.id || season.type)) || 1;
-  const r = await getJSON(`${CORE}/${L.s}/seasons/${year}/types/${type}/leaders?lang=it`, 3600);
-  const cat = (r.data.categories || []).find(c => c.name === "assists") || (r.data.categories || []).find(c => /assist/i.test(c.name)) || {};
+  const st = season.type && (season.type.id || season.type);
+  let r = null, cat = {};
+  for (const type of [...new Set([1, st].filter(Boolean))]){          // il codice stagione del sito (es. 14240) non vale qui: prima il tipo 1
+    try {
+      r = await getJSON(`${CORE}/${L.s}/seasons/${year}/types/${type}/leaders?lang=it`, 3600);
+      cat = (r.data.categories || []).find(c => c.name === "assists") || (r.data.categories || []).find(c => /assist/i.test(c.name)) || {};
+      if ((cat.leaders || []).length) break;
+    } catch {}
+  }
+  if (!r) throw new Error("assist non disponibili");
   const top = (cat.leaders || []).slice(0, 25);
   const teamInfo = new Map();
   const list = await Promise.all(top.map(async x => {
@@ -1492,10 +1499,9 @@ async function viewStat(){
   const rows = res.list.map((p, i) => {
     if (p.val !== prev){ rank = i + 1; prev = p.val; }
     const avg = p.apps ? (p.val / p.apps).toFixed(2).replace(".", ",") : "–";
-    const head = p.head ? `<img class="hs" src="${esc(p.head)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=&quot;hs ph&quot;>${initials(p.name)}</span>'">` : `<span class="hs ph">${initials(p.name)}</span>`;
     return `<div class="pl${favIds.has(p.teamId) ? " fav" : ""}" role="button" tabindex="0" data-sp="${i}">
       <span class="n${rank <= 3 ? " g" + rank : ""}">${rank}</span>
-      <span class="face">${head}${p.logo ? crest(p.logo, p.team) : ""}</span>
+      <span class="face"${p.id ? faceData(p, p.team) : ""}>${p.id ? autoFace(p) : `<span class="hs ph">${initials(p.name)}</span>`}${p.logo ? crest(p.logo, p.team) : ""}</span>
       <div class="who"><b>${esc(p.name)}</b><span>${esc(p.team)}</span></div>
       <div class="nums">
         <div><small>Pres</small><em>${p.apps ?? "–"}</em></div>
@@ -1805,7 +1811,7 @@ async function teamRosa(f, key, box){
   box._roster = list;
   const groups = ["G","D","M","F",""].map(k => [k, list.filter(p => (k ? p.pos === k : !POS_IT[p.pos]))]).filter(([, l]) => l.length);
   box.innerHTML = groups.map(([k, l]) => `<div class="seclbl" style="margin:14px 4px 8px">${POS_IT[k] || "Altri"} · ${l.length}</div><div class="sheet">${l.sort((a,b) => (+a.jersey || 99) - (+b.jersey || 99)).map(p => `
-      <div class="sres" data-ath="${esc(p.id)}" data-pn="${esc(p.name)}" data-tm="${esc(p.team || f.name || "")}" data-age="${p.age || ""}"><span class="face">${rosaFace(p)}${p.jersey ? `<span class="jn">${esc(p.jersey)}</span>` : ""}</span>
+      <div class="sres" data-ath="${esc(p.id)}"><span class="face"${faceData(p, p.team || f.name, p.age)}>${autoFace(p)}${p.jersey ? `<span class="jn">${esc(p.jersey)}</span>` : ""}</span>
         <div class="who"><b>${esc(p.name)}</b><span>${p.flag ? `<img class="flag" src="${esc(p.flag)}" alt="">` : ""}${esc(p.nat)}${p.age ? " · " + p.age + " anni" : ""}</span></div><span class="chev">›</span></div>`).join("")}</div>`).join("")
     + `<p class="note" style="text-align:center;margin-top:12px">Tocca un giocatore per la sua scheda.</p>`;
 }
@@ -1987,22 +1993,25 @@ function pitchFace(a){
     return w.u ? `<img class="hs wk" src="${esc(w.u)}" alt="" onerror="this.outerHTML='<span class=&quot;hs ph&quot;>${initials(nm)}</span>'">` : `<span class="hs ph">${initials(nm)}</span>`;
   return `<img class="hs" src="${headUrl(id)}" alt="" onerror="pitchMiss(this)">`;
 }
-/* Rosa della squadra: stessa logica (scelte da Stefano › ESPN › Wikipedia), qui l'età arriva già dalla rosa */
-function rosaFace(p){
+/* Foto in Rosa e Marcatori: stessa logica (scelte da Stefano › ESPN › Wikipedia).
+   Il contenitore .face porta data-fid (id), data-pn (nome), data-tm (squadra), data-age (se nota) */
+const faceData = (p, team, age) => ` data-fid="${esc(String(p.id || ""))}" data-pn="${esc(p.name || "")}" data-tm="${esc(team || p.team || "")}" data-age="${age || ""}"`;
+function autoFace(p){
   const id = String(p.id || ""), w = store.get("wp2:" + id);
   if (FOTO[id]) return myFace(id, p.name);
   if (id && NOH.has(id) && w && Date.now() - w.t < 30 * 864e5)
     return w.u ? `<img class="hs" src="${esc(w.u)}" alt="" onerror="this.outerHTML='<span class=&quot;hs ph&quot;>${initials(p.name)}</span>'">` : `<span class="hs ph">${initials(p.name)}</span>`;
-  return `<img class="hs" src="${headUrl(id)}" alt="" loading="lazy" onerror="rosaMiss(this)">`;
+  return `<img class="hs" src="${esc(p.head || headUrl(id))}" alt="" loading="lazy" onerror="autoMiss(this)">`;
 }
-function rosaMiss(img){
-  const r = img.closest("[data-ath]"); if (!r) return;
+function autoMiss(img){
+  const r = img.closest("[data-fid]"); if (!r) return;
   img.outerHTML = `<span class="hs ph">${initials(r.dataset.pn || "")}</span>`;
-  const id = r.dataset.ath; if (!id) return;
+  const id = r.dataset.fid; if (!id) return;
   if (!NOH.has(id)){ NOH.add(id); store.set("noh", [...NOH].slice(-3000)); }
   wikiQ.push({ id, name:r.dataset.pn || "", team:r.dataset.tm || "", age:+r.dataset.age || null });
   wikiRun();
 }
+const athleteAge = id => getJSON(`https://sports.core.api.espn.com/v2/sports/soccer/athletes/${id}`, 7 * 86400).then(r => r.data.age || null).catch(() => null);
 function pitchMiss(img){
   const pl = img.closest(".pl"); if (!pl) return;
   img.outerHTML = `<span class="hs ph">${initials(pl.dataset.pn || "")}</span>`;
@@ -2029,9 +2038,9 @@ async function wikiRun(){
     const j = wikiQ.shift(); wikiBusy++;
     (async () => {
       try {
-        const age = j.age || (j.tid ? (await teamAges(j.slug, j.tid)).get(j.id) : null) || null;
+        const age = j.age || (j.tid ? (await teamAges(j.slug, j.tid)).get(j.id) : null) || (await athleteAge(j.id));
         const u = await wikiFace({ id:j.id, name:j.name, team:j.team, age });
-        if (u) document.querySelectorAll(`.pitch .pl[data-pid="${CSS.escape(j.id)}"] .hw, .sres[data-ath="${CSS.escape(j.id)}"] .face`).forEach(hw => {
+        if (u) document.querySelectorAll(`.pitch .pl[data-pid="${CSS.escape(j.id)}"] .hw, .face[data-fid="${CSS.escape(j.id)}"]`).forEach(hw => {
           if (!hw.querySelector(".ph")) return;
           const im = new Image(); im.className = "hs wk"; im.alt = "";
           if (!hw.classList.contains("hw")) im.className = "hs";
