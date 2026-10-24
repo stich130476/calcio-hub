@@ -160,6 +160,26 @@
    "nome": "Johan Manzambi",
    "squadra": "Aston Villa",
    "foto": "foto/386992.jpg"
+  },
+  "301980": {
+   "nome": "José Romero",
+   "squadra": "Parma",
+   "foto": "foto/301980.jpg"
+  },
+  "301166": {
+   "nome": "Thierno Barry",
+   "squadra": "Everton",
+   "foto": "foto/301166.jpg"
+  },
+  "335201": {
+   "nome": "Nicolò Tresoldi",
+   "squadra": "Club Brugge",
+   "foto": "foto/335201.jpg"
+  },
+  "181836": {
+   "nome": "Ivan Provedel",
+   "squadra": "Inter",
+   "foto": "foto/181836.jpg"
   }
  }
 }
