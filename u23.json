@@ -3,7 +3,7 @@
  "campionato": "Serie C · Girone C",
  "stagione": "2026-27",
  "fonte": "inter.it (calendario e risultati ufficiali)",
- "aggiornato": "2026-10-23",
+ "aggiornato": "2026-10-24",
  "partite": [
   {
    "g": 1,
@@ -91,7 +91,9 @@
    "d": "2026-10-24T14:30:00+02:00",
    "ora": true,
    "casa": "Inter U23",
-   "ospite": "Sorrento"
+   "ospite": "Sorrento",
+   "gc": 1,
+   "go": 1
   },
   {
    "g": 8,
