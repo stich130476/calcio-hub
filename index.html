@@ -317,6 +317,7 @@ body.lock .main{overflow:hidden}
 .pitch .pl .hw{width:var(--hsz);height:var(--hsz);border-radius:50%;overflow:hidden;flex:none;border:2px solid rgba(255,255,255,.9);
   background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.55),rgba(255,255,255,.18));box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .pitch .pl .hw .hs{display:block;width:100%;height:100%;border:0;border-radius:0;object-fit:cover;object-position:50% 0;transform:scale(1.4);transform-origin:50% 16%}
+.pitch .pl .hw .hs.wk{transform:scale(1.3);transform-origin:50% 28%}
 .pitch .pl .hw .hs.ph{display:grid;place-items:center;transform:none;font:700 12px var(--f-num);color:#fff;background:var(--plc,rgba(255,255,255,.18))}
 .pitch .pl b{font:700 11px/1.15 var(--f-num);color:#fff;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .pitch .pl b em{font-style:normal;color:rgba(255,255,255,.7);margin-right:3px}
@@ -1905,20 +1906,61 @@ function pitchHtml(rH, rA, m){
   const LH = pitchLines(rH), LA = pitchLines(rA);
   if (!LH || !LA) return "";
   const surname = a => { const n = a.shortName || a.displayName || ""; const w = n.split(" "); return w.length > 1 && /\./.test(w[0]) ? w.slice(1).join(" ") : (a.lastName || w[w.length - 1] || n); };
-  const one = (p, x, y, col) => {
+  const one = (p, x, y, col, t) => {
     const a = p.athlete || {}, sb = p.subbedOut ? `<span class="sb out">▼</span>` : p.subbedIn ? `<span class="sb in">▲</span>` : "";
-    return `<div class="pl" style="left:${x}%;top:${y}%;--plc:${col}"><span class="hw">${faceImg(a.id, a.displayName || "", "hs")}</span>${sb}<b><em>${esc(p.jersey || "")}</em>${esc(surname(a))}</b></div>`;
+    return `<div class="pl" style="left:${x}%;top:${y}%;--plc:${col}" data-pid="${esc(String(a.id || ""))}" data-pn="${esc(a.displayName || "")}" data-tm="${esc(t.full || t.name || "")}" data-tid="${esc(t.id || "")}" data-sl="${esc(m.slug || "")}"><span class="hw">${pitchFace(a)}</span>${sb}<b><em>${esc(p.jersey || "")}</em>${esc(surname(a))}</b></div>`;
   };
   const col = t => t.color && /^[0-9a-f]{6}$/i.test(t.color) && !/^(ffffff|000000)$/i.test(t.color) ? "#" + t.color + "aa" : "rgba(255,255,255,.18)";
   // casa in basso (attacca verso l'alto), ospiti in alto (attaccano verso il basso, sinistra/destra specchiate)
-  const half = (L, bottom, c) => L.map((ln, k) => {
+  const half = (L, bottom, c, t) => L.map((ln, k) => {
     const y = bottom ? 92 - k * (38 / (L.length - 1)) : 5 + k * (38 / (L.length - 1));
-    return ln.map((p, j) => { let x = (j + 0.5) * 100 / ln.length; if (!bottom) x = 100 - x; x = 5 + x * 0.9; return one(p, x, y, c); }).join("");
+    return ln.map((p, j) => { let x = (j + 0.5) * 100 / ln.length; if (!bottom) x = 100 - x; x = 5 + x * 0.9; return one(p, x, y, c, t); }).join("");
   }).join("");
   return `<div class="pitch${Math.max(LH.length, LA.length) > 5 ? " dense" : ""}">
     <div class="ln half"></div><div class="ln cc"></div><div class="ln box t"></div><div class="ln box b"></div><div class="ln sbox t"></div><div class="ln sbox b"></div>
     <div class="tl t">${crest(m.away.logo, m.away.name)}${esc(rA.formation || "")}</div><div class="tl b">${crest(m.home.logo, m.home.name)}${esc(rH.formation || "")}</div>
-    ${half(LA, false, col(m.away))}${half(LH, true, col(m.home))}</div>`;
+    ${half(LA, false, col(m.away), m.away)}${half(LH, true, col(m.home), m.home)}</div>`;
+}
+/* Foto sul campo: prima ESPN; se ESPN non ce l'ha, Wikipedia (stessi controlli della scheda giocatore) */
+const NOH = new Set(store.get("noh") || []);
+function pitchFace(a){
+  const id = String(a.id || ""), nm = a.displayName || "", w = store.get("wp2:" + id);
+  if (id && NOH.has(id) && w && Date.now() - w.t < 30 * 864e5)
+    return w.u ? `<img class="hs wk" src="${esc(w.u)}" alt="" onerror="this.outerHTML='<span class=&quot;hs ph&quot;>${initials(nm)}</span>'">` : `<span class="hs ph">${initials(nm)}</span>`;
+  return `<img class="hs" src="${headUrl(id)}" alt="" onerror="pitchMiss(this)">`;
+}
+function pitchMiss(img){
+  const pl = img.closest(".pl"); if (!pl) return;
+  img.outerHTML = `<span class="hs ph">${initials(pl.dataset.pn || "")}</span>`;
+  const id = pl.dataset.pid; if (!id) return;
+  if (!NOH.has(id)){ NOH.add(id); store.set("noh", [...NOH].slice(-3000)); }
+  wikiQ.push({ id, name:pl.dataset.pn || "", team:pl.dataset.tm || "", tid:pl.dataset.tid || "", slug:pl.dataset.sl || "" });
+  wikiRun();
+}
+const wikiQ = [], ageMaps = new Map(); let wikiBusy = 0;
+function teamAges(slug, tid){                            // età dei giocatori dalla rosa ESPN, per distinguere gli omonimi
+  const k = slug + "/" + tid;
+  if (!ageMaps.has(k)) ageMaps.set(k, (slug && tid ? getJSON(`${API}/site/v2/sports/soccer/${slug}/teams/${tid}/roster`, 86400, true) : Promise.reject())
+    .then(r => new Map(((r.data && r.data.athletes) || []).map(a => [String(a.id), a.age || null]))).catch(() => new Map()));
+  return ageMaps.get(k);
+}
+async function wikiRun(){
+  while (wikiBusy < 3 && wikiQ.length){
+    const j = wikiQ.shift(); wikiBusy++;
+    (async () => {
+      try {
+        const ages = await teamAges(j.slug, j.tid);
+        const u = await wikiFace({ id:j.id, name:j.name, team:j.team, age:ages.get(j.id) || null });
+        if (u) document.querySelectorAll(`.pitch .pl[data-pid="${CSS.escape(j.id)}"] .hw`).forEach(hw => {
+          if (!hw.querySelector(".ph")) return;
+          const im = new Image(); im.className = "hs wk"; im.alt = "";
+          im.onload = () => { hw.innerHTML = ""; hw.appendChild(im); };
+          im.src = u;
+        });
+      } catch {}
+      wikiBusy--; wikiRun();
+    })();
+  }
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-lm]"); if (!b) return;
@@ -1954,7 +1996,7 @@ async function wikiFace(p){
         const withYear = cands.filter(pg => yearsOf(pg).some(y => born.includes(y)));
         const contra = cands.filter(pg => yearsOf(pg).length && !yearsOf(pg).some(y => born.includes(y)));
         hit = withYear[0] || (cands.length === 1 && !contra.length ? cands[0] : null);
-      } else if (cands.length === 1) hit = cands[0];
+      } else if (cands.length === 1 && plain(cands[0].title).includes(nameW[nameW.length - 1] || "")) hit = cands[0];
       if (hit && hit.thumbnail){ url = hit.thumbnail.source; break; }
       if (cands.length) break;                         // trovato ma ambiguo o senza foto: non provare altre lingue
     } catch {}
