@@ -1,4 +1,20 @@
 {
  "nota": "Foto dei giocatori scelte da Stefano. Chiave = id ESPN del giocatore. \"foto\": percorso dell'immagine nel repository, oppure null per non mostrare nessuna foto (es. foto sbagliata da Wikipedia).",
- "giocatori": {}
+ "giocatori": {
+  "290545": {
+   "nome": "Daniel Maldini",
+   "squadra": "Cagliari",
+   "foto": "foto/290545.jpg"
+  },
+  "6729": {
+   "nome": "Alessandro Romano",
+   "squadra": "Cagliari",
+   "foto": "foto/6729.jpg"
+  },
+  "418819": {
+   "nome": "Paul Mendy",
+   "squadra": "Cagliari",
+   "foto": "foto/418819.jpg"
+  }
+ }
 }
