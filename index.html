@@ -318,6 +318,7 @@ body.lock .main{overflow:hidden}
   background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.55),rgba(255,255,255,.18));box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .pitch .pl .hw .hs{display:block;width:100%;height:100%;border:0;border-radius:0;object-fit:cover;object-position:50% 0;transform:scale(1.4);transform-origin:50% 16%}
 .pitch .pl .hw .hs.wk{transform:scale(1.3);transform-origin:50% 28%}
+.pitch .pl .hw .hs.my{transform:none}
 .pitch .pl .hw .hs.ph{display:grid;place-items:center;transform:none;font:700 12px var(--f-num);color:#fff;background:var(--plc,rgba(255,255,255,.18))}
 .pitch .pl b{font:700 11px/1.15 var(--f-num);color:#fff;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .pitch .pl b em{font-style:normal;color:rgba(255,255,255,.7);margin-right:3px}
@@ -1779,7 +1780,13 @@ function athOf(a, team){
            height:a.height || null, weight:a.weight || null, teamId:team.id, team:team.full || team.name, teamLogo:team.logo, slug:team.home || team.slug };
 }
 const headUrl = id => `https://a.espncdn.com/i/headshots/soccer/players/full/${id}.png`;
-const faceImg = (id, name, cls = "hs") => `<img class="${cls}" src="${headUrl(id)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=&quot;${cls} ph&quot;>${initials(name)}</span>'">`;
+/* Foto scelte da Stefano (foto.json nel repository): hanno la precedenza su ESPN e Wikipedia; "foto": null = niente foto */
+const FOTO_BASE = "https://stich130476.github.io/calcio-hub/";
+let FOTO = store.get("foto") || {};
+getJSON(FOTO_BASE + "foto.json", 3600).then(r => { FOTO = (r.data && r.data.giocatori) || {}; store.set("foto", FOTO); }).catch(() => {});
+const myFace = (id, name, cls = "hs") => { const f = FOTO[String(id)];
+  return f.foto ? `<img class="${cls} my" src="${FOTO_BASE + esc(f.foto)}" alt="" onerror="this.outerHTML='<span class=&quot;${cls} ph&quot;>${initials(name)}</span>'">` : `<span class="${cls} ph">${initials(name)}</span>`; };
+const faceImg = (id, name, cls = "hs") => FOTO[String(id)] ? myFace(id, name, cls) : `<img class="${cls}" src="${headUrl(id)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=&quot;${cls} ph&quot;>${initials(name)}</span>'">`;
 async function teamRosa(f, key, box){
   box.innerHTML = `<div class="sheet"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
   if (!f.home || !f.id) await teamMatches(f);
@@ -1925,6 +1932,7 @@ function pitchHtml(rH, rA, m){
 const NOH = new Set(store.get("noh") || []);
 function pitchFace(a){
   const id = String(a.id || ""), nm = a.displayName || "", w = store.get("wp2:" + id);
+  if (FOTO[id]) return myFace(id, nm);
   if (id && NOH.has(id) && w && Date.now() - w.t < 30 * 864e5)
     return w.u ? `<img class="hs wk" src="${esc(w.u)}" alt="" onerror="this.outerHTML='<span class=&quot;hs ph&quot;>${initials(nm)}</span>'">` : `<span class="hs ph">${initials(nm)}</span>`;
   return `<img class="hs" src="${headUrl(id)}" alt="" onerror="pitchMiss(this)">`;
@@ -1974,6 +1982,7 @@ document.addEventListener("click", e => {
 /* ---------- Foto dei giocatori da Wikipedia (quando ESPN non ce l'ha) ----------
    Si accetta solo una pagina di calciatore che contenga nome e squadra: meglio le iniziali che una foto sbagliata. */
 async function wikiFace(p){
+  if (FOTO[String(p.id)]) return null;                    // foto scelta a mano (o tolta): Wikipedia non serve
   const key = "wp2:" + p.id, c = store.get(key);
   if (c && Date.now() - c.t < 30 * 864e5) return c.u;
   const plain = x => (x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();

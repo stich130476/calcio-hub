@@ -1,0 +1,4 @@
+{
+ "nota": "Foto dei giocatori scelte da Stefano. Chiave = id ESPN del giocatore. \"foto\": percorso dell'immagine nel repository, oppure null per non mostrare nessuna foto (es. foto sbagliata da Wikipedia).",
+ "giocatori": {}
+}
