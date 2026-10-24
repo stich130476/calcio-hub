@@ -1642,7 +1642,7 @@ async function openMatch(slug, id, again){
       return list.map(p => {
         const a = p.athlete || {};
         const sb = p.subbedOut ? `<span class="sb out">▼</span>` : p.subbedIn ? `<span class="sb in">▲</span>` : "";
-        return `<div class="p"><em>${esc(p.jersey || "")}</em><span>${esc(a.displayName || a.shortName || "")}</span>${sb}</div>`;
+        return `<div class="p"${luData(a, p, t, slug)} role="button"><em>${esc(p.jersey || "")}</em><span>${esc(a.displayName || a.shortName || "")}</span>${sb}</div>`;
       }).join("");
     };
     const head = (rr, t) => `<div class="fm">${crest(t.logo, t.name)}${esc(rr.formation || "")}</div>`;
@@ -1915,7 +1915,7 @@ function pitchHtml(rH, rA, m){
   const surname = a => { const n = a.shortName || a.displayName || ""; const w = n.split(" "); return w.length > 1 && /\./.test(w[0]) ? w.slice(1).join(" ") : (a.lastName || w[w.length - 1] || n); };
   const one = (p, x, y, col, t) => {
     const a = p.athlete || {}, sb = p.subbedOut ? `<span class="sb out">▼</span>` : p.subbedIn ? `<span class="sb in">▲</span>` : "";
-    return `<div class="pl" style="left:${x}%;top:${y}%;--plc:${col}" data-pid="${esc(String(a.id || ""))}" data-pn="${esc(a.displayName || "")}" data-tm="${esc(t.full || t.name || "")}" data-tid="${esc(t.id || "")}" data-sl="${esc(m.slug || "")}"><span class="hw">${pitchFace(a)}</span>${sb}<b><em>${esc(p.jersey || "")}</em>${esc(surname(a))}</b></div>`;
+    return `<div class="pl" style="left:${x}%;top:${y}%;--plc:${col}" ${luData(a, p, t, m.slug)} role="button"><span class="hw">${pitchFace(a)}</span>${sb}<b><em>${esc(p.jersey || "")}</em>${esc(surname(a))}</b></div>`;
   };
   const col = t => t.color && /^[0-9a-f]{6}$/i.test(t.color) && !/^(ffffff|000000)$/i.test(t.color) ? "#" + t.color + "aa" : "rgba(255,255,255,.18)";
   // casa in alto (attacca verso il basso, sinistra/destra specchiate), ospiti in basso: come FotMob, Sofascore e le app più diffuse
@@ -1927,6 +1927,25 @@ function pitchHtml(rH, rA, m){
     <div class="ln half"></div><div class="ln cc"></div><div class="ln box t"></div><div class="ln box b"></div><div class="ln sbox t"></div><div class="ln sbox b"></div>
     <div class="tl t">${crest(m.home.logo, m.home.name)}${esc(rH.formation || "")}</div><div class="tl b">${crest(m.away.logo, m.away.name)}${esc(rA.formation || "")}</div>
     ${half(LH, false, col(m.home), m.home)}${half(LA, true, col(m.away), m.away)}</div>`;
+}
+/* Dati del giocatore sul campo e nell'elenco: servono per la foto e per aprire la sua scheda */
+const luData = (a, p, t, slug) => ` data-pid="${esc(String(a.id || ""))}" data-pn="${esc(a.displayName || "")}" data-jn="${esc(p.jersey || "")}" data-tm="${esc(t.full || t.name || "")}" data-tid="${esc(t.id || "")}" data-lg="${esc(t.logo || "")}" data-sl="${esc(slug || "")}"`;
+document.addEventListener("click", e => {
+  const el = e.target.closest(".pitch .pl[data-pid], .lu .p[data-pid]");
+  if (!el || !el.dataset.pid) return;
+  e.stopPropagation(); openLinePlayer(el.dataset);
+}, true);
+async function openLinePlayer(d){
+  makeSheet("ovP", 50, d.pn || "Giocatore");             // la scheda si apre subito, i dati arrivano dopo
+  let slug = d.sl || "", logo = d.lg || "";
+  const lg = BY[slug] || {};
+  if (lg.euro || lg.cup || !lg.s){                        // partita di coppa: per le statistiche serve il campionato della squadra
+    try { const t = (await teamsIndex()).find(x => x.id === String(d.tid)); if (t){ slug = t.slug; logo = logo || t.logo; } } catch {}
+  }
+  const team = { id:d.tid, full:d.tm, name:d.tm, logo, home:slug };
+  let p = { id:String(d.pid), name:d.pn || "", jersey:d.jn || "", teamId:d.tid, team:d.tm, teamLogo:logo, slug };
+  try { const a = (await teamRoster(slug, d.tid)).find(x => String(x.id) === String(d.pid)); if (a) p = Object.assign(athOf(a, team), { jersey:a.jersey || d.jn || "" }); } catch {}
+  if (document.getElementById("ovP")) openPlayer(p);      // se nel frattempo è stata chiusa, non la riapre
 }
 /* Foto sul campo: prima ESPN; se ESPN non ce l'ha, Wikipedia (stessi controlli della scheda giocatore) */
 const NOH = new Set(store.get("noh") || []);
@@ -1946,10 +1965,16 @@ function pitchMiss(img){
   wikiRun();
 }
 const wikiQ = [], ageMaps = new Map(); let wikiBusy = 0;
+const rosters = new Map();
+function teamRoster(slug, tid){                           // rosa ESPN della squadra (una volta per sessione)
+  const k = slug + "/" + tid;
+  if (!rosters.has(k)) rosters.set(k, (slug && tid ? getJSON(`${API}/site/v2/sports/soccer/${slug}/teams/${tid}/roster`, 86400, true) : Promise.reject())
+    .then(r => (r.data && r.data.athletes) || []).catch(() => []));
+  return rosters.get(k);
+}
 function teamAges(slug, tid){                            // età dei giocatori dalla rosa ESPN, per distinguere gli omonimi
   const k = slug + "/" + tid;
-  if (!ageMaps.has(k)) ageMaps.set(k, (slug && tid ? getJSON(`${API}/site/v2/sports/soccer/${slug}/teams/${tid}/roster`, 86400, true) : Promise.reject())
-    .then(r => new Map(((r.data && r.data.athletes) || []).map(a => [String(a.id), a.age || null]))).catch(() => new Map()));
+  if (!ageMaps.has(k)) ageMaps.set(k, teamRoster(slug, tid).then(l => new Map(l.map(a => [String(a.id), a.age || null]))));
   return ageMaps.get(k);
 }
 async function wikiRun(){
