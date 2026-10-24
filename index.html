@@ -1783,7 +1783,7 @@ const headUrl = id => `https://a.espncdn.com/i/headshots/soccer/players/full/${i
 /* Foto scelte da Stefano (foto.json nel repository): hanno la precedenza su ESPN e Wikipedia; "foto": null = niente foto */
 const FOTO_BASE = "https://stich130476.github.io/calcio-hub/";
 let FOTO = store.get("foto") || {};
-getJSON(FOTO_BASE + "foto.json", 3600).then(r => { FOTO = (r.data && r.data.giocatori) || {}; store.set("foto", FOTO); }).catch(() => {});
+getJSON(FOTO_BASE + "foto.json", 300).then(r => { FOTO = (r.data && r.data.giocatori) || {}; store.set("foto", FOTO); }).catch(() => {});
 const myFace = (id, name, cls = "hs") => { const f = FOTO[String(id)];
   return f.foto ? `<img class="${cls} my" src="${FOTO_BASE + esc(f.foto)}" alt="" onerror="this.outerHTML='<span class=&quot;${cls} ph&quot;>${initials(name)}</span>'">` : `<span class="${cls} ph">${initials(name)}</span>`; };
 const faceImg = (id, name, cls = "hs") => FOTO[String(id)] ? myFace(id, name, cls) : `<img class="${cls}" src="${headUrl(id)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=&quot;${cls} ph&quot;>${initials(name)}</span>'">`;
