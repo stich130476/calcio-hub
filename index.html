@@ -334,11 +334,11 @@ body.lock .main{overflow:hidden}
 .lu .p em{font-style:normal;font:600 13px var(--f-num);color:var(--mute);min-width:18px;text-align:right}
 .lu .p span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
 .lu .p .sb{flex:none;font-size:11px;color:var(--mute)}
-.lu .p .rl{flex:none;align-self:center;width:18px;height:18px;border-radius:5px;display:grid;place-items:center;font:800 11px/1 var(--f-num);font-style:normal}
-.lu .p .rl.P{color:#ffd23f;background:rgba(255,210,63,.13)}
-.lu .p .rl.D{color:#6fd3ff;background:rgba(111,211,255,.13)}
-.lu .p .rl.C{color:#ffa03c;background:rgba(255,160,60,.13)}
-.lu .p .rl.A{color:#ff6b6b;background:rgba(255,107,107,.14)}
+.lu .p .rl{flex:none;align-self:center;width:18px;height:18px;border-radius:4px;display:grid;place-items:center;font:800 11px/1 var(--f-num);font-style:normal}
+.lu .p .rl.P{color:#1a1400;background:#f5c518}
+.lu .p .rl.D{color:#fff;background:#2f6fd8}
+.lu .p .rl.C{color:#fff;background:#2f9e46}
+.lu .p .rl.A{color:#fff;background:#d83a3a}
 .lu .p .sb.out{color:#ffb3c0} .lu .p .sb.in{color:#9ff2cf}
 .bench summary{list-style:none;cursor:pointer;padding:11px 16px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);border-top:1px solid var(--line)}
 .bench summary::-webkit-details-marker{display:none}
@@ -1954,7 +1954,7 @@ async function openLinePlayer(d){
   try { const a = (await teamRoster(slug, d.tid)).find(x => String(x.id) === String(d.pid)); if (a) p = Object.assign(athOf(a, team), { jersey:a.jersey || d.jn || "" }); } catch {}
   if (document.getElementById("ovP")) openPlayer(p);      // se nel frattempo è stata chiusa, non la riapre
 }
-/* Ruolo dei giocatori in panchina: P portiere, D difensore, C centrocampista, A attaccante */
+/* Ruolo dei giocatori in panchina, colori come in Pro Evolution Soccer: P giallo, D blu, C verde, A rosso */
 const ROLES = new Map();
 function roleOf(ab){
   const a = (ab || "").toUpperCase();
