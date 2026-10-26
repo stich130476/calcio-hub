@@ -300,7 +300,7 @@ body.lock .main{overflow:hidden}
 .tlfill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,rgba(46,230,166,.55),rgba(46,230,166,.85))}
 .tlht{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:rgba(255,255,255,.45);border-radius:1px}
 .tlt{position:absolute;top:10px;transform:translateX(-50%);font:700 10.5px var(--f-num);color:var(--mute)}
-.tlt:first-of-type{transform:none} .tlt:last-child{transform:translateX(-100%)}
+.tlt:first-of-type{transform:none} .tlt:last-child{transform:translateX(-100%)} .tlt.rec{color:#f3c969}
 .evsep{display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
 .evsep::before,.evsep::after{content:"";flex:1;height:1px;background:var(--line)}
 .sr{padding:9px 16px}
@@ -1676,8 +1676,13 @@ async function h2hFromSchedules(m){
 /* Cronologia grafica: barra 0'–90' (o 120' con i supplementari), casa sopra e ospiti sotto */
 function timelineHtml(evs, m){
   const ext = evs.some(e => e.period >= 3 || minNum(e.min) > 90.99) || /EXTRA|AET|SHOOTOUT|PEN/i.test((m.stName || "") + " " + (m.detail || ""));
-  const max = ext ? 120 : 90;
-  const x = e => { const v = minNum(e.min); return Math.max(1.5, Math.min(97, (Math.floor(v) + (v % 1 ? 0.6 : 0)) / max * 100)); };
+  // recupero del secondo tempo: la barra si allunga oltre il 90' (fino a +15) così gli eventi non si ammucchiano
+  const stop = v => Math.round((v - Math.floor(v)) * 100);
+  const rec = ext ? 0 : Math.min(15, Math.max(0, ...evs.map(e => { const v = minNum(e.min); return Math.floor(v) >= 90 ? stop(v) : 0; })));
+  const max = ext ? 120 : 90 + rec;
+  const x = e => { const v = minNum(e.min), b0 = Math.floor(v), st = stop(v);
+    const at = b0 >= 90 && !ext ? 90 + Math.min(st, rec) : b0 + (st ? 0.6 : 0);
+    return Math.max(1.5, Math.min(97, at / max * 100)); };
   const lane = home => {
     const list = evs.filter(e => e.isHome === home).map(e => ({ e, x:x(e) })).sort((a,b) => a.x - b.x);
     const lastX = [];                                           // sovrapposizioni: impila in livelli
@@ -1693,7 +1698,7 @@ function timelineHtml(evs, m){
   const tick = v => `<span class="tlt" style="left:${v / max * 100}%">${v}'</span>`;
   return `<div class="blk"><h3>Cronologia</h3><div class="sheet tlbox">
     <div class="tlrow"><span class="tlc">${crest(m.home.logo, m.home.name)}</span><div class="tllane">${lane(true)}</div></div>
-    <div class="tlrow axis"><span class="tlc"></span><div class="tlbar"><i class="tlfill" style="width:${cur > 0 && cur < 999 ? cur : 0}%"></i><i class="tlht" style="left:${45 / max * 100}%"></i>${ext ? `<i class="tlht" style="left:${90 / max * 100}%"></i>` : ""}${tick(0)}${tick(45)}${tick(90)}${ext ? tick(120) : ""}</div></div>
+    <div class="tlrow axis"><span class="tlc"></span><div class="tlbar"><i class="tlfill" style="width:${cur > 0 && cur < 999 ? cur : 0}%"></i><i class="tlht" style="left:${45 / max * 100}%"></i>${rec ? `<i class="tlht" style="left:${90 / max * 100}%"></i>` : ""}${ext ? `<i class="tlht" style="left:${90 / max * 100}%"></i>` : ""}${tick(0)}${tick(45)}${tick(90)}${ext ? tick(120) : ""}${rec ? `<span class="tlt rec" style="left:100%">+${rec}'</span>` : ""}</div></div>
     <div class="tlrow"><span class="tlc">${crest(m.away.logo, m.away.name)}</span><div class="tllane">${lane(false)}</div></div>
   </div></div>`;
 }
