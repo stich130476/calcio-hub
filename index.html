@@ -278,6 +278,8 @@ body.lock .main{overflow:hidden}
 .ev .who{min-width:0}
 .ev .who b{display:block;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev .who small{display:block;font-size:11px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .evp{cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:4px;transition:color .15s,background .15s}
+.ev .evp:active{color:var(--fg);background:rgba(120,170,255,.16)}
 .ev .min{font:700 14px var(--f-num);color:var(--fg2);text-align:center;font-variant-numeric:tabular-nums}
 .ev.goal .min{color:var(--fg);background:rgba(255,255,255,.1);border-radius:8px;padding:3px 0}
 .ico{flex:none;width:18px;height:18px;display:grid;place-items:center}
@@ -1816,6 +1818,17 @@ async function openMatch(slug, id, again){
 
   /* Marcatori e cartellini */
   const homeId = m.home.id;
+  /* Nome → giocatore (id, squadra, maglia): serve per aprire la scheda toccando il nome nell'elenco */
+  const evPl = new Map();
+  const nmKey = n => (n || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  (d.rosters || []).forEach(r => { const tid = r.team && String(r.team.id);
+    (r.roster || []).forEach(x => { const a = x.athlete || {}; if (a.id) evPl.set(nmKey(a.displayName), { id:String(a.id), name:a.displayName, jersey:x.jersey || "", tid }); }); });
+  (d.keyEvents || []).forEach(k => (k.participants || []).forEach(x => { const a = x.athlete || {};
+    if (a.id && !evPl.has(nmKey(a.displayName))) evPl.set(nmKey(a.displayName), { id:String(a.id), name:a.displayName, jersey:"", tid:k.team && String(k.team.id) }); }));
+  const evTap = (name, fallbackTid) => { const q = evPl.get(nmKey(name));
+    if (!q) return esc(name);
+    const t = String(q.tid || fallbackTid) === String(m.home.id) ? m.home : m.away;
+    return `<span class="evp"${luData({ id:q.id, displayName:q.name }, { jersey:q.jersey }, t, slug)}>${esc(name)}</span>`; };
   const evs = (d.keyEvents || []).map(k => {
     const t = ((k.type && (k.type.type || k.type.text)) || "").toLowerCase();
     const kind = /subst/.test(t) ? "sub" : k.scoringPlay || /goal|penalty---scored|own/.test(t) ? "goal" : /red/.test(t) ? "rc" : /yellow/.test(t) ? "yc" : null;
@@ -1827,11 +1840,13 @@ async function openMatch(slug, id, again){
       if (mm) ppl = [mm[1].replace(/^.*Substitution,?\s*[^.]*\.\s*/i, "").trim(), mm[2].trim()];
       extra = ppl[1] ? "Esce " + ppl[1] : "";
     }
+    let extraName = "";
     if (kind === "goal"){ if (/own/.test(t)) extra = "Autogol"; else if (/penalty/.test(t)) extra = "Rigore"; else if (ppl[1]) extra = "Assist " + ppl[1]; }
+    if (ppl[1] && extra.endsWith(" " + ppl[1])){ extraName = ppl[1]; extra = extra.slice(0, -ppl[1].length); }
     if (kind === "rc" && /second|yellow/.test(t)) extra = "Doppia ammonizione";
     const teamId = k.team && String(k.team.id);
     const isHome = teamId === homeId;
-    return { kind, min:(k.clock && k.clock.displayValue) || "", who:ppl[0] || k.shortText || "", extra, isHome, period:(k.period && k.period.number) || 0 };
+    return { kind, min:(k.clock && k.clock.displayValue) || "", who:ppl[0] || k.shortText || "", tapWho:!!ppl[0], extra, extraName, teamId, isHome, period:(k.period && k.period.number) || 0 };
   }).filter(Boolean).sort((a,b) => minNum(a.min) - minNum(b.min));
   if (evs.length) html += timelineHtml(evs, m);
   if (evs.length){
@@ -1840,7 +1855,7 @@ async function openMatch(slug, id, again){
       const half = minNum(e.min) <= 45.99 && e.period <= 1 ? 1 : (e.period >= 3 || minNum(e.min) > 90.99 ? 3 : 2);
       if (half !== lastHalf){ rows += `<div class="evsep">${half === 1 ? "Primo tempo" : half === 2 ? "Secondo tempo" : "Supplementari"}</div>`; lastHalf = half; }
       const icon = e.kind === "goal" ? `<span class="ico">${BALL}</span>` : e.kind === "sub" ? `<span class="ico sub">${SUBICO}</span>` : `<span class="ico ${e.kind}"><i></i></span>`;
-      const who = `<div class="who"><b>${esc(e.who)}</b>${e.extra ? `<small>${esc(e.extra)}</small>` : ""}</div>`;
+      const who = `<div class="who"><b>${e.tapWho ? evTap(e.who, e.teamId) : esc(e.who)}</b>${e.extra || e.extraName ? `<small>${esc(e.extra)}${e.extraName ? evTap(e.extraName, e.teamId) : ""}</small>` : ""}</div>`;
       rows += `<div class="ev ${e.kind === "goal" ? "goal" : e.kind === "sub" ? "subev" : ""}">
         <div class="hs">${e.isHome ? who + icon : ""}</div><div class="min">${esc(e.min)}</div><div class="as">${!e.isHome ? icon + who : ""}</div></div>`;
     }
@@ -2327,7 +2342,7 @@ function pitchHtml(rH, rA, m){
 /* Dati del giocatore sul campo e nell'elenco: servono per la foto e per aprire la sua scheda */
 const luData = (a, p, t, slug) => ` data-pid="${esc(String(a.id || ""))}" data-pn="${esc(a.displayName || "")}" data-jn="${esc(p.jersey || "")}" data-tm="${esc(t.full || t.name || "")}" data-tid="${esc(t.id || "")}" data-lg="${esc(t.logo || "")}" data-sl="${esc(slug || "")}"`;
 document.addEventListener("click", e => {
-  const el = e.target.closest(".pitch .pl[data-pid], .lu .p[data-pid]");
+  const el = e.target.closest(".pitch .pl[data-pid], .lu .p[data-pid], .ev .evp[data-pid]");
   if (!el || !el.dataset.pid) return;
   e.stopPropagation(); openLinePlayer(el.dataset);
 }, true);
