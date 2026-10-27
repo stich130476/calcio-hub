@@ -3,7 +3,7 @@
  "campionato": "Serie C · Girone C",
  "stagione": "2026-27",
  "fonte": "inter.it (calendario e risultati ufficiali)",
- "aggiornato": "2026-10-24",
+ "aggiornato": "2026-10-27",
  "partite": [
   {
    "g": 1,
@@ -100,7 +100,9 @@
    "d": "2026-10-27T14:30:00+01:00",
    "ora": true,
    "casa": "Inter U23",
-   "ospite": "Scafatese"
+   "ospite": "Scafatese",
+   "gc": 2,
+   "go": 1
   },
   {
    "g": 12,
