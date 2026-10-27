@@ -520,6 +520,23 @@ body.lock .main{overflow:hidden}
 .calbtn b{display:block;font-size:15px} .calbtn small{display:block;font-size:12px;color:var(--mute);margin-top:1px}
 .calbtn > span:nth-child(2){flex:1;min-width:0}
 .calbtn .chev{font-size:26px;color:var(--mute);line-height:1}
+.rkslot{display:block;min-height:0}
+.rkchip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px 4px 8px;border-radius:999px;background:rgba(28,40,72,.85);border:1px solid rgba(110,135,190,.45);font:600 13.5px var(--f-num);color:#aab6cd;white-space:nowrap}
+.rkchip i{display:block;width:4px;height:16px;border-radius:2px}
+.rkchip b{color:#fff;font-weight:800;font-size:15px}
+.rkchip[aria-expanded="true"]{border-color:#7fb2ff;background:rgba(40,70,130,.6)}
+.sheet.rkt{padding:6px 0 4px}
+.rkr{display:grid;grid-template-columns:44px 1fr 44px 36px 48px;align-items:center;gap:6px;padding:9px 16px;border-top:1px solid var(--line)}
+.rkr.hd{border-top:0;padding-top:6px;padding-bottom:2px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.rkr span{text-align:center;font:600 15px var(--f-num);color:var(--fg2);font-variant-numeric:tabular-nums}
+.rkr.hd span{font:inherit}
+.rkr .pt{font-weight:800;font-size:17px;color:var(--fg)}
+.rkr .p{color:#2ee6a6} .rkr .n{color:#ff5c6c}
+.rkp{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;border:2px solid var(--zc);color:#fff!important;font-weight:800!important}
+.rkn{display:flex!important;align-items:center;gap:8px;min-width:0;text-align:left!important}
+.rkn .crest{width:24px;height:24px;flex:none}
+.rkn b{font-size:15px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rkgap{padding:8px 16px 6px;border-top:1px solid var(--line);font-size:12px;color:var(--mute);text-align:center}
 .mh .calh{font-size:10.5px;letter-spacing:.06em;color:var(--c-blue);font-weight:700}
 .favspot{width:40px;height:40px;color:#ffd978} .favspot svg{width:22px;height:22px;filter:drop-shadow(0 2px 6px rgba(240,169,42,.5))}
 .cmp{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:4px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);white-space:nowrap}
@@ -1636,6 +1653,44 @@ async function viewStat(){
 /* ---------- SCHEDA PARTITA ---------- */
 const STATS_IT = [["possessionPct","Possesso palla","%"],["totalShots","Tiri"],["shotsOnTarget","Tiri in porta"],["wonCorners","Calci d'angolo"],
   ["foulsCommitted","Falli"],["offsides","Fuorigioco"],["saves","Parate"],["yellowCards","Ammonizioni"],["redCards","Espulsioni"]];
+/* Classifica nella scheda partita: etichetta "12° · 11 pt" sotto il nome, che apre e chiude un riquadro con i dettagli */
+const RK = new Map(); let rkLast = null, rkOpenId = null;   // aperto solo dopo un tocco, e solo per quella partita
+const rkIsOpen = () => !!rkLast && rkOpenId === String(rkLast.m.id);
+const rkData = slug => { const o = RK.get(slug); return o && Date.now() - o.t < 15 * 60e3 ? o.map : null; };
+const rkZone = (slug, pos) => { const z = (ZONES[slug] || []).find(([a, b]) => pos >= a && pos <= b); return z ? ZINFO[z[2]][1] : "rgba(255,255,255,.28)"; };
+function rkChip(tid, slug){
+  const map = rkData(slug), st = map && map.get(String(tid));
+  if (!st || !st.rank) return "";
+  const open = rkIsOpen();
+  return `<button class="rkchip press" type="button" data-rkc aria-expanded="${open}"><i style="background:${rkZone(slug, st.rank)}"></i><b>${st.rank}°</b><span>· ${st.points ?? "–"} pt</span></button>`;
+}
+function rkBox(m, slug){
+  const map = rkData(slug); if (!map || !rkIsOpen()) return "";
+  const rows = [m.home, m.away].map(t => ({ t, st:map.get(String(t.id)) })).filter(x => x.st && x.st.rank).sort((a,b) => a.st.rank - b.st.rank);
+  if (rows.length < 2) return "";
+  const L = BY[slug] || {}, n = v => v == null || isNaN(v) ? "–" : v;
+  const dr = st => st.pointDifferential ?? ((st.pointsFor ?? 0) - (st.pointsAgainst ?? 0));
+  const gap = Math.abs((rows[0].st.points || 0) - (rows[1].st.points || 0));
+  return `<div class="blk"><h3>Classifica · ${esc(L.n || "")}</h3><div class="sheet rkt">
+    <div class="rkr hd"><span></span><span></span><span>Pt</span><span>G</span><span>DR</span></div>
+    ${rows.map(({ t, st }) => { const d = dr(st); return `<div class="rkr"><span class="rkp" style="--zc:${rkZone(slug, st.rank)}">${st.rank}</span><span class="rkn">${crest(t.logo, t.name)}<b>${esc(t.name)}</b></span><span class="pt">${n(st.points)}</span><span>${n(st.gamesPlayed)}</span><span class="${d > 0 ? "p" : d < 0 ? "n" : ""}">${d > 0 ? "+" + d : n(d)}</span></div>`; }).join("")}
+    <div class="rkgap">${gap ? `${gap} ${gap === 1 ? "punto" : "punti"} di distacco` : "Stessi punti in classifica"}</div></div></div>`;
+}
+async function rkFill(m, slug, ev){
+  const L = BY[slug];
+  if (!L || L.cup || L.euro || slug === "ita.3") return;
+  if (!rkData(slug)){ const map = await officialTable(slug); if (!map) return; RK.set(slug, { t:Date.now(), map }); }
+  if (openEv !== ev) return;
+  document.querySelectorAll("#ovB .rkslot").forEach(sl => { if (!sl.firstChild) sl.innerHTML = rkChip(sl.dataset.t, slug); });
+  const bx = document.getElementById("rkbox"); if (bx) bx.innerHTML = rkBox(m, slug);
+}
+document.addEventListener("click", e => {
+  const c = e.target.closest("[data-rkc]"); if (!c) return;
+  e.stopPropagation(); e.preventDefault();
+  const open = !rkIsOpen(); rkOpenId = open && rkLast ? String(rkLast.m.id) : null;
+  document.querySelectorAll("#ovB [data-rkc]").forEach(b => b.setAttribute("aria-expanded", String(open)));
+  const bx = document.getElementById("rkbox"); if (bx && rkLast) bx.innerHTML = rkBox(rkLast.m, rkLast.slug);
+}, true);
 /* Precedenti: ESPN li dà nella scheda partita; se mancano, li cerco nei calendari delle ultime stagioni */
 const H2H = new Map();
 function h2hHtml(list, m){
@@ -1723,7 +1778,7 @@ function removeSheet(id){
 }
 const closeMatch = () => removeSheet("ov");
 async function openMatch(slug, id, again){
-  if (!again){ makeSheet("ov", 40, "Dettagli partita"); openEv = id; }
+  if (!again){ makeSheet("ov", 40, "Dettagli partita"); openEv = id; rkOpenId = null; }
   let r;
   try { r = await getJSON(`${API}/site/v2/sports/soccer/${slug}/summary?event=${id}`, 20); }
   catch {
@@ -1741,6 +1796,7 @@ async function openMatch(slug, id, again){
   if (col(m.home)) ms.style.setProperty("--hc", col(m.home));
   if (col(m.away)) ms.style.setProperty("--ac", col(m.away));
   const p = phase(m);
+  rkLast = { m, slug };
 
   /* Intestazione */
   let center, stt = "";
@@ -1751,12 +1807,12 @@ async function openMatch(slug, id, again){
     stt = m.state === "in" ? `<span class="tag live"><span class="dot"></span>${esc(p.label)}</span>` : `<span class="tag">${esc(p.label)}</span>`;
     stt += extraBadge(m);
   }
-  const side = t => `<div class="side me" role="button" tabindex="0" style="cursor:pointer" data-cal="${esc(t.id)}" data-sl="${esc(slug)}" data-nm="${esc(t.full)}" data-lg="${esc(t.logo)}"><span class="spot">${crest(t.logo, t.name)}</span><b>${esc(t.full)}</b><small class="calh">Calendario ›</small></div>`;
+  const side = t => `<div class="side me" role="button" tabindex="0" style="cursor:pointer" data-cal="${esc(t.id)}" data-sl="${esc(slug)}" data-nm="${esc(t.full)}" data-lg="${esc(t.logo)}"><span class="spot">${crest(t.logo, t.name)}</span><b>${esc(t.full)}</b><span class="rkslot" data-t="${esc(t.id)}">${rkChip(t.id, slug)}</span><small class="calh">Calendario ›</small></div>`;
   let html = `<div class="mh">
       <div class="compl">${logo ? `<img src="${esc(logo)}" alt="">` : ""}${esc(L.n)}</div>
       <div class="when">${fmt(m.date, { weekday:"short", day:"numeric", month:"short" }).replace(/\./g, "")} · ${timeOf(m.date)}${m.note ? " · " + esc(m.note) : ""}</div>
       <div class="vs">${side(m.home)}<div><div>${center}</div><div class="stt">${stt}</div></div>${side(m.away)}</div>
-      ${m.venue ? `<div class="venue">${esc(m.venue)}</div>` : ""}</div>`;
+      ${m.venue ? `<div class="venue">${esc(m.venue)}</div>` : ""}</div><div id="rkbox">${rkBox(m, slug)}</div>`;
 
   /* Marcatori e cartellini */
   const homeId = m.home.id;
@@ -1856,6 +1912,7 @@ async function openMatch(slug, id, again){
   body.innerHTML = html;
   if (open) body.querySelector(".bench").open = true;
   fillRoles(body);
+  rkFill(m, slug, id);
   if (!h2hEspn.length && !H2H.has(m.home.id + "-" + m.away.id)) h2hFromSchedules(m).then(() => { const b = document.getElementById("h2hb"); if (b && openEv === id) b.innerHTML = h2hHtml(H2H.get(m.home.id + "-" + m.away.id) || [], m); });
   clearTimeout(evTimer);
   if (m.state === "in") evTimer = setTimeout(() => { mem.delete(`${API}/site/v2/sports/soccer/${slug}/summary?event=${id}`); try { localStorage.removeItem("c:" + `${API}/site/v2/sports/soccer/${slug}/summary?event=${id}`); } catch {} openMatch(slug, id, true); }, 20000);
