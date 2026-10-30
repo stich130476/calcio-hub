@@ -2138,7 +2138,11 @@ async function teamXI(f, key, box){
 }
 function onePitchHtml(rr, t, slug){
   const L = pitchLines(rr); if (!L) return "";
-  const surname = a => { const n = a.shortName || a.displayName || ""; const w = n.split(" "); return w.length > 1 && /\./.test(w[0]) ? w.slice(1).join(" ") : (a.lastName || w[w.length - 1] || n); };
+  const surname = a => {                          // "J. Monteiro" › Monteiro; altrimenti il cognome che compare nel nome mostrato (non un secondo cognome)
+    const sn = a.shortName || "", dn = a.displayName || sn, w = sn.split(" ");
+    if (w.length > 1 && /\./.test(w[0])) return w.slice(1).join(" ");
+    if (a.lastName && dn.toLowerCase().endsWith(a.lastName.toLowerCase())) return a.lastName;
+    const d = dn.split(" "); return d.length > 1 ? d.slice(1).join(" ") : dn; };
   const col = t.color && /^[0-9a-f]{6}$/i.test(t.color) ? "#" + t.color + "aa" : "rgba(255,255,255,.18)";
   const html = L.map((ln, k) => {
     const y = 88 - k * (76 / (L.length - 1));
@@ -2323,7 +2327,11 @@ function pitchLines(rr){
 function pitchHtml(rH, rA, m){
   const LH = pitchLines(rH), LA = pitchLines(rA);
   if (!LH || !LA) return "";
-  const surname = a => { const n = a.shortName || a.displayName || ""; const w = n.split(" "); return w.length > 1 && /\./.test(w[0]) ? w.slice(1).join(" ") : (a.lastName || w[w.length - 1] || n); };
+  const surname = a => {                          // "J. Monteiro" › Monteiro; altrimenti il cognome che compare nel nome mostrato (non un secondo cognome)
+    const sn = a.shortName || "", dn = a.displayName || sn, w = sn.split(" ");
+    if (w.length > 1 && /\./.test(w[0])) return w.slice(1).join(" ");
+    if (a.lastName && dn.toLowerCase().endsWith(a.lastName.toLowerCase())) return a.lastName;
+    const d = dn.split(" "); return d.length > 1 ? d.slice(1).join(" ") : dn; };
   const one = (p, x, y, col, t) => {
     const a = p.athlete || {}, sb = p.subbedOut ? `<span class="sb out">▼</span>` : p.subbedIn ? `<span class="sb in">▲</span>` : "";
     return `<div class="pl" style="left:${x}%;top:${y}%;--plc:${col}" ${luData(a, p, t, m.slug)} role="button"><span class="hw">${pitchFace(a)}</span>${sb}<b><em>${esc(p.jersey || "")}</em>${esc(surname(a))}</b></div>`;
