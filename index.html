@@ -160,6 +160,8 @@ img{max-width:100%}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;display:flex;align-items:center;gap:8px;padding:5px 15px 5px 6px;border-radius:999px;font-weight:700}
 .chip .crest{width:26px;height:26px}
+.chip.allchip{padding-left:12px} .chip.allchip .ico{width:18px;height:18px} .chip.allchip .ico svg{width:16px;height:16px}
+.band.daybd h2{text-transform:none}
 .chip[aria-current="true"]{background:linear-gradient(180deg,#ffd978 0%,#f0a92a 100%);color:#2a1a00;border-color:rgba(255,255,255,.45);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 5px 16px rgba(240,169,42,.45)}
 .cards{display:grid;gap:12px}
@@ -1448,9 +1450,9 @@ async function viewMie(){
       <div style="text-align:center;padding-bottom:22px"><button class="press addbtn" data-edit>Aggiungi squadre</button></div></div>`;
     stamp(); return;
   }
-  if (S.fav !== "u23" && !FAVS.some(f => f.key === S.fav)) S.fav = FAVS[0].key;
+  if (S.fav !== "u23" && S.fav !== "all" && !FAVS.some(f => f.key === S.fav)) S.fav = FAVS[0].key;
   $("#view").innerHTML = header("Le mie squadre") +
-    `<div class="chips" id="chips">${FAVS.map(f => `<button class="chip press" data-f="${f.key}" aria-current="${S.fav === f.key}">${crest(f.logo || "", f.name)}${esc(f.name)}</button>`).join("")}
+    `<div class="chips" id="chips"><button class="chip press allchip" data-f="all" aria-current="${S.fav === "all"}"><span class="ico">${ICONS.oggi}</span>Per orario</button>${FAVS.map(f => `<button class="chip press" data-f="${f.key}" aria-current="${S.fav === f.key}">${crest(f.logo || "", f.name)}${esc(f.name)}</button>`).join("")}
        <button class="chip press" data-f="u23" aria-current="${S.fav === "u23"}">${crest(U23.logo, U23.name)}${esc(U23.name)}</button>
        <button class="chip press edit" data-edit aria-label="Modifica squadre preferite"><span class="ico">${ICONS.edit}</span>Modifica</button></div>
      <div id="favbody"><div class="cards"><div class="card"><div class="skel"></div></div><div class="card"><div class="skel"></div></div></div></div>`;
@@ -1460,6 +1462,7 @@ async function viewMie(){
     $("#chips").querySelectorAll(".chip").forEach(b => { const f = FAVS.find(x => x.key === b.dataset.f); if (!f) return; const c = b.querySelector(".crest"); if (f.logo && c && c.tagName !== "IMG") c.outerHTML = crest(f.logo, f.name); });
   });
   if (S.fav === "u23") return viewU23();
+  if (S.fav === "all") return viewMieAll();
   const f = await resolveFav(FAVS.find(x => x.key === S.fav) || FAVS[0]);
   if (S.tab !== "mie") return;
   const r = await teamMatches(f);
@@ -1480,6 +1483,39 @@ async function viewMie(){
     try { for (let i = localStorage.length - 1; i >= 0; i--){ const k = localStorage.key(i); if (k && k.includes(`/teams/${f.id}/schedule`)) localStorage.removeItem(k); } } catch {}
     viewMie();
   }, 30000);
+}
+/* "Per orario": le prossime partite di tutte le preferite (Inter U23 compresa) in un'unica lista per data e ora */
+async function viewMieAll(){
+  const box = $("#favbody");
+  box.innerHTML = `<div class="sheet"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
+  const favs = await Promise.all(FAVS.map(resolveFav));
+  const res = await Promise.all([...favs.map(f => teamMatches(f).then(r => ({ f, r })).catch(() => ({ f, r:{ next:[], at:Date.now() } }))),
+    u23Matches().then(u => ({ f:U23, r:{ next:u.ms.filter(m => m.state !== "post" && m.date > Date.now() - 3 * 3600e3).slice(0, 5), at:u.at } })).catch(() => ({ f:U23, r:{ next:[] } }))]);
+  if (S.tab !== "mie" || S.fav !== "all") return;
+  const seen = new Map();
+  for (const { f, r } of res) for (const m of (r.next || [])){
+    if (m.state === "post") continue;
+    const k = m.id; if (!seen.has(k)) seen.set(k, { m, favs:[] });
+    seen.get(k).favs.push(f);
+  }
+  const all = [...seen.values()].sort((a,b) => a.m.date - b.m.date);
+  stamp(Math.min(...res.map(x => (x.r && x.r.at) || Date.now())));
+  if (!all.length){ box.innerHTML = `<div class="sheet">${emptyBox("Nessuna partita in programma", "Il calendario delle tue squadre non è ancora disponibile.", true)}</div>`; return; }
+  const today = dayKey(new Date());
+  let html = `<div class="sheet">`, last = "";
+  for (const { m } of all){
+    const k = dayKey(m.date);
+    if (k !== last){
+      const dd = Math.round((keyDate(k) - keyDate(today)) / 864e5);
+      const lab = m.state === "in" ? "In corso" : dd === 0 ? "Oggi" : dd === 1 ? "Domani" : fmt(m.date, { weekday:"long" });
+      html += `<div class="band daybd"><h2>${esc(lab.charAt(0).toUpperCase() + lab.slice(1))}</h2><span class="count">${esc(fmt(m.date, { day:"numeric", month:"long" }))}</span></div>`;
+      last = k;
+    }
+    html += `<div class="rows">${matchRow(m, BY[m.slug] || { s:m.slug, n:m.slug === "ita.3" ? "Serie C" : m.slug }, true)}</div>`;
+  }
+  box.innerHTML = html + `</div><p class="note" style="text-align:center;margin-top:12px">Tutte le prossime partite delle tue squadre, in ordine di data e ora.</p>`;
+  clearTimeout(refreshTimer);
+  if (all.some(x => x.m.state === "in")) refreshTimer = setTimeout(() => { if (S.tab === "mie" && S.fav === "all" && !openEv) viewMieAll(); }, 30000);
 }
 function card(m, f){
   const l = BY[m.slug] || { n:m.slug }, logo = leagueLogo(m.slug);
