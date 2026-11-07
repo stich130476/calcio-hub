@@ -12,6 +12,21 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>Calcio Hub 2.0</title>
+<script>
+/* Tema: "auto" segue l'Aspetto dell'iPhone (chiaro di giorno, scuro di notte), oppure "light"/"dark" fissi */
+(function(){
+  var pref = "auto"; try { pref = JSON.parse(localStorage.getItem("themePref")) || "auto"; } catch (e) {}
+  var mq = window.matchMedia ? matchMedia("(prefers-color-scheme: light)") : null;
+  function apply(){
+    var p = "auto"; try { p = JSON.parse(localStorage.getItem("themePref")) || "auto"; } catch (e) {}
+    var t = p === "auto" ? (mq && mq.matches ? "light" : "dark") : p;
+    document.documentElement.setAttribute("data-theme", t);
+    var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", t === "light" ? "#eef2fb" : "#070d1c");
+  }
+  window.applyTheme = apply; apply();
+  if (mq && mq.addEventListener) mq.addEventListener("change", apply); else if (mq && mq.addListener) mq.addListener(apply);
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700;800&display=swap">
@@ -714,6 +729,13 @@ td.frm{white-space:nowrap}
   .tab .lbl{display:none}
   .top h1{font-size:25px}
 }
+@media (max-width:480px){
+  .top{gap:8px}
+  .top .iconbtn{width:36px;height:36px;border-radius:12px}
+  .top .iconbtn svg{width:18px;height:18px}
+  .top .tlogo{width:40px;height:40px} .top .tlogo img{width:30px;height:30px}
+  .top h1{font-size:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
 /* ---------- Orizzontale a tutto schermo (classifica e marcatori su iPhone) ---------- */
 .railtab{position:fixed;left:0;top:50%;z-index:25;display:grid;place-items:center;
   width:30px;height:86px;padding-left:env(safe-area-inset-left,0px);box-sizing:content-box;border-radius:0 16px 16px 0;color:var(--fg);
@@ -778,6 +800,120 @@ body.immersive .top h1{font-size:23px}
 .ptr.spin{opacity:1!important;transform:translate(-50%,58px)!important;transition:transform .25s ease}
 .ptr.spin svg{animation:spin .9s linear infinite}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===================== TEMA GIORNO =====================
+   Attivo con html[data-theme="light"]: lo decide l'Aspetto dell'iPhone (Automatico) o l'interruttore in alto. */
+html[data-theme="light"]{color-scheme:light}
+html[data-theme="light"]:root,html[data-theme="light"]{
+  --bg:#eef2fb;--sheet:rgba(255,255,255,.80);--sheet-hi:rgba(15,30,70,.02);
+  --line:rgba(20,35,80,.09);--line2:rgba(20,35,80,.15);
+  --fg:#101b36;--fg2:#34466a;--mute:#6b7b98;
+  --sky:#0b8fd6;--gold:#c48a00;--live:#0fa84a;
+  --c-blue:#0b84d6;--c-gold:#c48a00;--c-green:#0f9a6c;--c-orange:#e5700a;--c-purple:#7b4fd6}
+html[data-theme="light"] body{
+  background:
+    radial-gradient(70% 45% at 0% 0%, rgba(64,120,255,.30) 0%, transparent 70%),
+    radial-gradient(60% 40% at 100% 8%, rgba(155,90,255,.24) 0%, transparent 70%),
+    radial-gradient(70% 45% at 90% 100%, rgba(0,190,220,.22) 0%, transparent 70%),
+    radial-gradient(50% 35% at 0% 85%, rgba(255,95,150,.16) 0%, transparent 70%),
+    linear-gradient(180deg,#f2f5fe 0%,#f5f1fd 55%,#eef6fb 100%);
+  background-attachment:fixed;color:var(--fg)}
+html[data-theme="light"] .rail{background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.40));border-right-color:rgba(20,35,80,.08)}
+html[data-theme="light"] .medal{background:linear-gradient(150deg,#ffffff,#eef2fb);border-color:rgba(20,35,80,.10);
+  box-shadow:inset 0 1px 0 #fff,0 4px 12px rgba(30,50,110,.14),0 1px 2px rgba(30,50,110,.10)}
+html[data-theme="light"] .medal img{filter:none}
+html[data-theme="light"] .lg[aria-current="true"] .medal{border-color:#fff;box-shadow:0 0 0 3px color-mix(in srgb,var(--lc,#4cc3ff) 60%,transparent),0 6px 16px rgba(30,50,110,.20)}
+html[data-theme="light"] .iconbtn{background:linear-gradient(180deg,#ffffff,#f0f3fb);border-color:rgba(20,35,80,.10);box-shadow:0 2px 8px rgba(30,50,110,.12),inset 0 1px 0 #fff}
+html[data-theme="light"] .press{background:linear-gradient(180deg,#ffffff,#f1f4fb);border-color:rgba(20,35,80,.10);
+  box-shadow:0 3px 10px rgba(30,50,110,.10),0 1px 1px rgba(30,50,110,.08),inset 0 1px 0 #fff;color:var(--fg)}
+html[data-theme="light"] .press:active{box-shadow:0 1px 3px rgba(30,50,110,.15)}
+html[data-theme="light"] .press[aria-current="true"]{background:linear-gradient(180deg,#4f9dff 0%,#2563ff 100%);border-color:rgba(255,255,255,.6);color:#fff;box-shadow:0 6px 16px rgba(37,99,255,.35)}
+html[data-theme="light"] .press[aria-current="true"] span{color:rgba(255,255,255,.85)}
+html[data-theme="light"] .seg{background:rgba(20,35,80,.06)}
+html[data-theme="light"] .spot{background:radial-gradient(circle at 50% 45%,#ffffff 0%,rgba(255,255,255,.85) 42%,rgba(255,255,255,0) 70%)}
+html[data-theme="light"] .crest{filter:drop-shadow(0 1px 2px rgba(20,35,80,.22))}
+html[data-theme="light"] .crest.ph{background:rgba(20,35,80,.07);color:var(--fg2)}
+html[data-theme="light"] .top .tlogo img{filter:drop-shadow(0 2px 3px rgba(20,35,80,.2))}
+html[data-theme="light"] .sheet{box-shadow:0 12px 32px rgba(30,50,110,.10),0 1px 2px rgba(30,50,110,.06);border-color:rgba(255,255,255,.9)}
+html[data-theme="light"] .band{background:linear-gradient(90deg,color-mix(in srgb,var(--lc) 88%,#fff) 0%,color-mix(in srgb,var(--lc) 55%,#fff) 60%,color-mix(in srgb,var(--lc) 18%,#fff) 100%);border-top-color:transparent}
+html[data-theme="light"] .band h2{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.22)}
+html[data-theme="light"] .band .count{color:var(--fg2);opacity:1}
+html[data-theme="light"] .band .spot{background:radial-gradient(circle,#fff 0 56%,rgba(255,255,255,0) 72%)}
+html[data-theme="light"] .pill.pre{background:rgba(11,132,214,.08);border-color:rgba(11,132,214,.30);color:#0a5f9e}
+html[data-theme="light"] .pill.post{background:rgba(20,35,80,.06);border-color:rgba(20,35,80,.12);color:var(--fg)}
+html[data-theme="light"] .pill.in{background:rgba(15,168,74,.12);border-color:rgba(15,168,74,.55);color:#0a7a36;box-shadow:0 0 12px rgba(15,168,74,.18)}
+html[data-theme="light"] .st.live{color:#0a7a36}
+html[data-theme="light"] .mid .big{color:#a96a00}
+html[data-theme="light"] .tag{background:rgba(20,35,80,.07);color:var(--fg2)}
+html[data-theme="light"] .tag.w{background:rgba(15,154,108,.14);color:#0b7350} html[data-theme="light"] .tag.l{background:rgba(220,40,70,.12);color:#b4203d} html[data-theme="light"] .tag.live{background:rgba(15,168,74,.14);color:#0a7a36}
+html[data-theme="light"] .card{background:linear-gradient(165deg,#ffffff,#f6f8fe);border-color:rgba(255,255,255,.95);box-shadow:0 14px 30px rgba(30,50,110,.12)}
+html[data-theme="light"] .card::before{opacity:.22}
+html[data-theme="light"] th{background:rgba(20,35,80,.045)}
+html[data-theme="light"] td.dr.p{color:#0b8a5c} html[data-theme="light"] td.dr.n{color:#c42a48}
+html[data-theme="light"] tr.fav td{background:rgba(255,190,40,.14)} html[data-theme="light"] tr.fav .tm span,html[data-theme="light"] tr.itr .tm > span:not(.spot){color:#a56c00}
+html[data-theme="light"] .pl.fav{background:rgba(255,190,40,.12)}
+html[data-theme="light"] .recap .w b{color:#0b8a5c} html[data-theme="light"] .recap .l b{color:#c42a48}
+html[data-theme="light"] .ov{background:rgba(40,55,100,.22)}
+html[data-theme="light"] .ms{border-color:rgba(255,255,255,.95);box-shadow:0 -20px 60px rgba(30,50,110,.25);
+  background:
+    radial-gradient(70% 30% at 15% 0%,color-mix(in srgb,var(--hc,#2f6bff) 26%,transparent),transparent 70%),
+    radial-gradient(70% 30% at 85% 0%,color-mix(in srgb,var(--ac,#8b3dff) 26%,transparent),transparent 70%),
+    linear-gradient(180deg,#f7f9ff 0%,#eef2fb 100%)}
+html[data-theme="light"] .ms .grab{background:rgba(20,35,80,.18)}
+html[data-theme="light"] .tabs{background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.92));border-top-color:rgba(20,35,80,.08)}
+html[data-theme="light"] .tab .soon{background:rgba(20,35,80,.08)}
+html[data-theme="light"] .skel{background:linear-gradient(90deg,rgba(20,35,80,.05) 0%,rgba(20,35,80,.10) 50%,rgba(20,35,80,.05) 100%);background-size:200% 100%}
+html[data-theme="light"] .sq input{background:#fff;border-color:rgba(20,35,80,.14)}
+html[data-theme="light"] .dyk{background:linear-gradient(135deg,rgba(150,100,255,.14),rgba(60,170,255,.08));border-color:rgba(150,100,255,.28)}
+html[data-theme="light"] .dyk-i{background:rgba(150,100,255,.16);color:#6a3fd0} html[data-theme="light"] .dyk-t{color:#6a3fd0}
+html[data-theme="light"] .cr:active{background:rgba(20,35,80,.04)} html[data-theme="light"] .cr.next{background:linear-gradient(90deg,rgba(11,132,214,.12),transparent)}
+html[data-theme="light"] .fchip{background:#fff;border-color:rgba(20,35,80,.10)}
+html[data-theme="light"] .fchip.w b{background:rgba(15,154,108,.16);color:#0b7350} html[data-theme="light"] .fchip.d b{background:rgba(20,35,80,.08);color:var(--fg2)} html[data-theme="light"] .fchip.l b{background:rgba(220,40,70,.14);color:#b4203d}
+html[data-theme="light"] .fres{background:rgba(20,35,80,.06)} html[data-theme="light"] .fres.w{background:rgba(15,154,108,.14);color:#0b7350} html[data-theme="light"] .fres.l{background:rgba(220,40,70,.12);color:#b4203d}
+html[data-theme="light"] .rkchip{background:#fff;border-color:rgba(20,35,80,.14);color:var(--fg2);box-shadow:0 2px 6px rgba(30,50,110,.10)}
+html[data-theme="light"] .rkchip b{color:var(--fg)} html[data-theme="light"] .rkchip[aria-expanded="true"]{border-color:#4f8bff;background:#eef4ff}
+html[data-theme="light"] .rkp{color:var(--fg)!important;background:#fff}
+html[data-theme="light"] .rkr.me{background:rgba(255,190,40,.16)} html[data-theme="light"] .rkr.me .rkn b{color:#8a5a00}
+html[data-theme="light"] .rkr .p{color:#0b8a5c} html[data-theme="light"] .rkr .n{color:#c42a48}
+html[data-theme="light"] .tinfo{background:rgba(255,255,255,.7);border-color:rgba(20,35,80,.08)}
+html[data-theme="light"] .tinfo a.lnk b,html[data-theme="light"] .tinfo .ext{color:#1f5fe0}
+html[data-theme="light"] .plx .pa{color:#1f5fe0;border-color:rgba(31,95,224,.45)}
+html[data-theme="light"] .lu .p .sb.out{color:#c42a48} html[data-theme="light"] .lu .p .sb.in{color:#0b8a5c}
+html[data-theme="light"] .tlbar{background:rgba(20,35,80,.10)} html[data-theme="light"] .tlht{background:rgba(20,35,80,.35)}
+html[data-theme="light"] .tlm.k-goal{filter:drop-shadow(0 1px 3px rgba(20,35,80,.35))}
+html[data-theme="light"] .h2ht b{color:var(--fg)}
+html[data-theme="light"] .ico.sub svg path:first-child{stroke:#0b8a5c}
+html[data-theme="light"] .face .hs,html[data-theme="light"] .bigface .hs{background:radial-gradient(circle at 50% 35%,#ffffff,#e7ecf6);border-color:rgba(20,35,80,.12)}
+html[data-theme="light"] .face .hs.ph,html[data-theme="light"] .bigface .hs.ph{color:var(--fg2)}
+html[data-theme="light"] .xb{filter:saturate(1.1)}
+html[data-theme="light"] .chip.edit{color:var(--fg2)}
+/* il campo delle formazioni resta verde: testi bianchi già leggibili */
+.thbtn svg{width:19px;height:19px}
+#themetoast{position:fixed;left:50%;bottom:calc(var(--tab) + env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);z-index:210;padding:9px 16px;border-radius:999px;
+  background:rgba(16,27,54,.92);color:#fff;font-size:13.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.3);white-space:nowrap;transition:opacity .4s}
+html[data-theme="light"] #themetoast{background:rgba(255,255,255,.96);color:var(--fg);box-shadow:0 8px 24px rgba(30,50,110,.2)}
+.rhead{display:flex;align-items:center;justify-content:space-between;margin:6px 4px 8px}
+.rhead .seclbl{margin:0}
+.rclr{font:600 12.5px var(--f-ui,inherit);color:var(--mute);background:none;border:0;padding:4px 2px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.rchips{display:flex;flex-wrap:wrap;gap:8px;margin:0 2px 4px}
+.rchip{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:5px 12px 5px 5px;border-radius:999px;cursor:pointer;
+  font:600 13.5px inherit;color:var(--fg);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rchip .spot{width:28px;height:28px} .rchip .spot .crest{width:20px;height:20px}
+.rchip .face{width:28px;height:28px;border-radius:50%;overflow:hidden;flex:none;background:rgba(255,255,255,.12)} .rchip .face img{width:100%;height:100%;object-fit:cover}
+.rchip .face .crest{display:none}
+.rchip .face .ph{width:100%;height:100%;display:grid;place-items:center;font:800 11px/1 var(--f-num);color:var(--fg);position:static;inset:auto;transform:none}
+html[data-theme="light"] .rchip{background:#fff;border-color:rgba(20,35,80,.12);box-shadow:0 2px 8px rgba(30,50,110,.10)}
+html[data-theme="light"] .rclr{color:#4a5b80}
+.tinfo .tyrs{display:flex;gap:8px;margin-top:3px}
+.tinfo .ty{flex:0 1 230px;min-width:0;display:flex;flex-direction:column;gap:1px;padding:7px 10px;border-radius:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+.tinfo .ty small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--mute);text-transform:uppercase}
+.tinfo .ty b{font:800 20px/1.1 var(--f-num);color:var(--fg)}
+html[data-theme="light"] .tinfo .ty{background:#fff;border-color:rgba(20,35,80,.10);box-shadow:0 1px 4px rgba(30,50,110,.08)}
+html[data-theme="light"] .face .jn{background:#1d4ed8;border-color:#fff;color:#fff}
+html[data-theme="light"] .aoc{background:linear-gradient(135deg,#f3ecff,#e9f0ff);border-color:rgba(124,77,255,.25);box-shadow:0 3px 12px rgba(80,60,160,.12)}
+html[data-theme="light"] .aoc-i{background:#e4d8ff;color:#6b3fd6}
+html[data-theme="light"] .aoc-t span{color:#6b3fd6}
+html[data-theme="light"] .aoc-x{background:rgba(20,35,80,.06);color:#4a5b80}
 </style>
 </head>
 <body>
@@ -1187,9 +1323,30 @@ function header(title, l){
              : title === "Partite" ? `<span class="spot tlogo ball">${BALL}</span>` : "";
   return `<div class="top">${lead}
     <div class="tt"><h1>${title}</h1><div class="sub" id="sub">Caricamento…</div></div>
+    <button class="iconbtn thbtn" data-theme-btn aria-label="Tema: ${themeLabel()}">${themeIcon()}</button>
     <button class="iconbtn" data-search aria-label="Cerca squadre e giocatori">${ICONS.search}</button>
     <button class="iconbtn" id="refresh" aria-label="Aggiorna">${ICONS.refresh}</button></div>`;
 }
+/* Interruttore del tema: Automatico › Giorno › Notte */
+const THEME_ORDER = ["auto", "light", "dark"];
+const themePref = () => { try { return JSON.parse(localStorage.getItem("themePref")) || "auto"; } catch { return "auto"; } };
+const themeLabel = () => ({ auto:"Automatico", light:"Giorno", dark:"Notte" })[themePref()];
+const themeIcon = () => ({
+  auto:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/></svg>`,
+  light:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>`,
+  dark:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a7 7 0 1 0 10.5 10.5z"/></svg>`
+})[themePref()];
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-theme-btn]"); if (!b) return;
+  const next = THEME_ORDER[(THEME_ORDER.indexOf(themePref()) + 1) % 3];
+  try { localStorage.setItem("themePref", JSON.stringify(next)); } catch {}
+  if (window.applyTheme) window.applyTheme();
+  document.querySelectorAll("[data-theme-btn]").forEach(x => { x.innerHTML = themeIcon(); x.setAttribute("aria-label", "Tema: " + themeLabel()); });
+  const old = document.getElementById("themetoast"); if (old) old.remove();
+  const t = document.createElement("div"); t.id = "themetoast";
+  t.textContent = next === "auto" ? "Tema automatico: segue l'iPhone" : next === "light" ? "Tema giorno" : "Tema notte";
+  document.body.appendChild(t); setTimeout(() => { t.style.opacity = "0"; }, 1600); setTimeout(() => t.remove(), 2100);
+});
 function stamp(at, stale){ const s = $("#sub"); if (s) s.textContent = (stale ? "Senza connessione · " : "") + "Aggiornato alle " + timeOf(new Date(at || Date.now())); }
 const emptyBox = (t, x, retry) => `<div class="empty"><b>${t}</b>${x || ""}${retry ? '<br><button class="press" data-retry>Riprova</button>' : ""}</div>`;
 const skel = n => `<div class="sheet">${'<div class="skel"></div>'.repeat(n)}</div>`;
@@ -2139,7 +2296,7 @@ function teamInfoBox(f){
    Nome dello stadio: ESPN (sede delle partite in casa). Capienza e fondazione: Wikidata, con controlli:
    la voce deve essere una squadra di calcio della nazione giusta, e la capienza si mostra solo se lo stadio
    di Wikidata è lo stesso indicato da ESPN. Se qualcosa non torna, quel dato non compare. */
-const TINFO = new Map(Object.entries(store.get("tinfo3") || {}));
+const TINFO = new Map(Object.entries(store.get("tinfo5") || {}));
 const LEAGUE_COUNTRY = { ita:["Q38"], eng:["Q145","Q21"], sco:["Q145","Q22"], esp:["Q29"], ger:["Q183"], fra:["Q142"], ned:["Q55"], por:["Q45"], bel:["Q31"], tur:["Q43"], aut:["Q40"], sui:["Q39"] };
 function teamInfoHtml(v){
   if (!v) return "";
@@ -2148,7 +2305,10 @@ function teamInfoHtml(v){
     const inner = `${ICONS.stadium || ""}<b>${esc(v.stadium)}</b>${v.cap ? `<small>${v.cap.toLocaleString("it-IT")} posti</small>` : ""}${v.wiki ? `<i class="ext">›</i>` : ""}`;
     parts.push(v.wiki ? `<a class="ti tstad lnk" href="${esc(v.wiki)}" target="_blank" rel="noopener">${inner}</a>` : `<span class="ti tstad">${inner}</span>`);
   }
-  if (v.founded) parts.push(`<span class="ti fd">Fondata nel <b>${v.founded}</b></span>`);
+  const yrs = [];
+  if (v.founded) yrs.push(`<span class="ty"><small>Società fondata</small><b>${v.founded}</b></span>`);
+  if (v.stadium && v.opened) yrs.push(`<span class="ty"><small>Stadio inaugurato</small><b>${v.opened}</b></span>`);
+  if (yrs.length) parts.push(`<span class="ti tyrs">${yrs.join("")}</span>`);
   return parts.join("");
 }
 const wd = async params => (await fetch(`https://www.wikidata.org/w/api.php?format=json&origin=*&${params}`)).json();
@@ -2187,6 +2347,8 @@ async function wikidataTeam(f){
   }
   return null;
 }
+/* squadre rifondate dopo un fallimento: anno di nascita della società storica */
+const FOUNDED_FIX = { "torino":1906, "fiorentina":1926, "parma":1913, "venezia":1907, "palermo":1900, "napoli":1926, "bari":1908 };
 async function teamInfo(f){
   if (!f || !f.id) return null;
   const k = String(f.id), c = TINFO.get(k);
@@ -2198,17 +2360,20 @@ async function teamInfo(f){
   try {
     const e = await wikidataTeam(f);
     if (e){
-      const inc = bestClaim(e, "P571"), tm = inc && inc.mainsnak.datavalue && inc.mainsnak.datavalue.value.time;
-      const y = tm && /^\+?(\d{4})/.exec(tm); if (y) out.founded = +y[1];
+      /* più date di fondazione (squadre rifondate dopo un fallimento): vale la più antica */
+      const ys = ((e.claims || {}).P571 || []).filter(c => c.rank !== "deprecated").map(c => { const t = c.mainsnak.datavalue && c.mainsnak.datavalue.value.time, m = t && /^\+?(\d{4})/.exec(t); return m ? +m[1] : 0; }).filter(Boolean);
+      if (ys.length) out.founded = Math.min(...ys);
       const vid = (bestClaim(e, "P115") || {}).mainsnak; const sid = vid && vid.datavalue && vid.datavalue.value.id;
-      if (sid && !out.cap){
+      if (sid){
         const se = ((await wd(`action=wbgetentities&ids=${sid}&props=claims|labels|sitelinks&languages=it|en&sitefilter=itwiki|enwiki`)).entities || {})[sid];
         if (se){
           const labs = Object.values(se.labels || {}).map(l => l.value);
           const same = !out.stadium || labs.some(l => { const a = words(l), b = words(out.stadium); return a.some(w => b.includes(w)); });
           const cp = bestClaim(se, "P1083"), amt = cp && cp.mainsnak.datavalue && +cp.mainsnak.datavalue.value.amount;
           if (same){
-            if (amt > 0) out.cap = Math.round(amt);
+            if (amt > 0 && !out.cap) out.cap = Math.round(amt);
+            const op = bestClaim(se, "P1619") || bestClaim(se, "P571"), ot = op && op.mainsnak.datavalue && op.mainsnak.datavalue.value.time;
+            const oy = ot && /^\+?(\d{4})/.exec(ot); if (oy && +oy[1] > 1850 && +oy[1] <= new Date().getFullYear()) out.opened = +oy[1];
             if (!out.stadium) out.stadium = (se.labels.it || se.labels.en || {}).value || null;
             const sl = se.sitelinks || {}, w = sl.itwiki ? ["it", sl.itwiki.title] : sl.enwiki ? ["en", sl.enwiki.title] : null;
             if (w) out.wiki = `https://${w[0]}.wikipedia.org/wiki/${encodeURIComponent(w[1].replace(/ /g, "_"))}`;
@@ -2217,7 +2382,9 @@ async function teamInfo(f){
       }
     }
   } catch {}
-  TINFO.set(k, out); store.set("tinfo3", Object.fromEntries(TINFO));
+  const fx = FOUNDED_FIX[plainW(f.full || f.name)] || FOUNDED_FIX[plainW(f.name)];
+  if (fx) out.founded = fx;
+  TINFO.set(k, out); store.set("tinfo5", Object.fromEntries(TINFO));
   return out;
 }
 const seasonMemo = new Map();
@@ -2921,7 +3088,7 @@ function teamRow(t){
 let searchSeq = 0;
 async function runSearch(q, box, mode){
   const s = nz(q.trim()), seq = ++searchSeq;
-  if (s.length < 2){ box.innerHTML = `<p class="note" style="text-align:center;padding:18px">Scrivi almeno 2 lettere: per esempio Dortmund, Palermo, Bastoni.</p>`; return; }
+  if (s.length < 2){ box.innerHTML = (mode !== "add" ? recentHtml() : "") + `<p class="note" style="text-align:center;padding:18px">Scrivi almeno 2 lettere: per esempio Dortmund, Palermo, Bastoni.</p>`; return; }
   box.innerHTML = `<div class="sheet"><div class="skel"></div><div class="skel"></div></div>`;
   const words = s.split(/\s+/);
   const hit = txt => { const n = nz(txt); return words.every(w => n.includes(w)); };
@@ -2949,6 +3116,29 @@ async function runSearch(q, box, mode){
   }
   box.innerHTML = html || `<div class="sheet">${emptyBox("Nessun risultato", "Prova con un altro nome o solo con una parte, per esempio Dortmund.")}</div>`;
 }
+/* ---------- Ricerca rapida: cercati di recente e squadre più cercate (solo su questo dispositivo) ---------- */
+const srHist = () => { const h = store.get("srHist"); return Array.isArray(h) ? h : []; };
+const srCount = () => store.get("srCount") || {};
+function srRemember(it){
+  const key = it.k + it.id;
+  const h = srHist().filter(x => x.k + x.id !== key); h.unshift(it); store.set("srHist", h.slice(0, 12));
+  if (it.k === "t"){ const c = srCount(); c[it.id] = { n:((c[it.id] || {}).n || 0) + 1, it }; store.set("srCount", c); }
+}
+function recentHtml(){
+  const h = srHist(), c = srCount();
+  const top = Object.values(c).filter(x => x.n >= 2).sort((a,b) => b.n - a.n).slice(0, 5);
+  if (!h.length && !top.length) return "";
+  const chip = x => x.k === "t"
+    ? `<button class="rchip" data-rt="${esc(x.id)}"><span class="spot">${crest(x.logo, x.name)}</span>${esc(x.name)}</button>`
+    : `<button class="rchip pl" data-rp="${esc(x.id)}"><span class="face">${faceImg(x.id, x.name)}</span>${esc(surnameOf(x.name))}</button>`;
+  let out = "";
+  if (h.length) out += `<div class="rhead"><span class="seclbl">Cercati di recente</span><button class="rclr" data-rclr>Cancella cronologia</button></div>
+    <div class="rchips">${h.map(chip).join("")}</div>`;
+  if (top.length) out += `<div class="seclbl" style="margin:16px 4px 8px">Squadre più cercate</div><div class="sheet">${top.map(x => `<div class="sres" data-rt="${esc(x.it.id)}"><span class="spot">${crest(x.it.logo, x.it.name)}</span>
+      <div class="who"><b>${esc(x.it.full || x.it.name)}</b><span>Cercata ${x.n} volte</span></div><span class="chev">›</span></div>`).join("")}</div>`;
+  return out;
+}
+const surnameOf = n => { const w = String(n || "").trim().split(/\s+/); return w.length > 1 ? w.slice(1).join(" ") : w[0]; };
 async function teamFor(id){
   return lastFound.get(id) || (await teamsIndex()).find(x => x.id === id);
 }
@@ -2976,11 +3166,17 @@ function searchSheet(id, mode){
     if (mv){ const i = +mv.dataset.mv, j = i + +mv.dataset.d; [FAVS[i], FAVS[j]] = [FAVS[j], FAVS[i]]; saveFavs(); drawList(); render(); return; }
     if (rm){ FAVS.splice(+rm.dataset.rm, 1); saveFavs(); drawList(); render(); runSearch(q.value, box, mode); return; }
     if (fv){ const t = await teamFor(fv.dataset.fav); if (t){ toggleFav(t); drawList(); fv.outerHTML = teamRow(t).match(/<button[\s\S]*<\/button>/)[0]; } return; }
-    if (tr && mode !== "add"){ const t = await teamFor(tr.dataset.tid); if (t){ removeSheet(id); openTeam(teamObj(t)); } return; }
+    if (e.target.closest("[data-rclr]")){ store.set("srHist", []); store.set("srCount", {}); runSearch(q.value, box, mode); return; }
+    const rt = e.target.closest("[data-rt]"), rp = e.target.closest("[data-rp]");
+    if (rt){ const x = srHist().find(y => y.k === "t" && y.id === rt.dataset.rt) || (srCount()[rt.dataset.rt] || {}).it; const t = x && ((await teamsIndex()).find(y => y.id === x.id) || x);
+      if (t){ srRemember({ k:"t", id:t.id, name:t.name, full:t.full, logo:t.logo, slug:t.slug }); removeSheet(id); openTeam(teamObj(t)); } return; }
+    if (rp){ const x = srHist().find(y => y.k === "p" && y.id === rp.dataset.rp); if (x){ const p = Object.assign({}, x); delete p.k; srRemember(x); openPlayer(p); } return; }
+    if (tr && mode !== "add"){ const t = await teamFor(tr.dataset.tid); if (t){ srRemember({ k:"t", id:t.id, name:t.name, full:t.full, logo:t.logo, slug:t.slug }); removeSheet(id); openTeam(teamObj(t)); } return; }
     if (tr && mode === "add"){ const t = await teamFor(tr.dataset.tid); if (t){ toggleFav(t); drawList(); const b = tr.querySelector("[data-fav]"); if (b) b.outerHTML = teamRow(t).match(/<button[\s\S]*<\/button>/)[0]; } return; }
     if (pl){
       const p = lastFound.get("p" + pl.dataset.pid); if (!p) return;
       if (!p.teamId && p.team){ const t = (await teamsIndex()).find(x => nz(x.full) === nz(p.team) || nz(x.name) === nz(p.team)); if (t) Object.assign(p, { teamId:t.id, teamLogo:t.logo, slug:p.slug && !/friendly/.test(p.slug) ? p.slug : t.slug }); }
+      srRemember({ k:"p", id:p.id, name:p.name, team:p.team, teamId:p.teamId, teamLogo:p.teamLogo, slug:p.slug, posName:p.posName });
       openPlayer(p);
     }
   });
