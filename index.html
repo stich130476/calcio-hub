@@ -96,7 +96,7 @@ img{max-width:100%}
   box-shadow:inset 0 1px 1px rgba(255,255,255,.4),inset 0 -3px 8px rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.35);
   -webkit-backdrop-filter:blur(12px) saturate(160%);backdrop-filter:blur(12px) saturate(160%);transition:transform .15s,box-shadow .2s}
 .lg:active .medal{transform:scale(.93)}
-.medal img{width:66%;height:66%;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+.medal img{width:78%;height:78%;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
 .medal .ini{font:700 15px var(--f-num);color:var(--fg2)}
 .lp{display:flex;flex-direction:column;align-items:center;line-height:1}
 .lp b{font:800 19px var(--f-num);color:#5cb6ff}
@@ -112,7 +112,7 @@ img{max-width:100%}
 .inner{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 .top{display:flex;align-items:center;gap:12px}
 .top .tlogo{width:44px;height:44px}
-.top .tlogo img{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
+.top .tlogo img{width:39px;height:39px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
 .top .tt{flex:1;min-width:0}
 .top h1{font:800 29px/1.02 var(--f-num);letter-spacing:.01em;margin:0;text-wrap:balance}
 .top .sub{color:var(--mute);font-size:12.5px;margin-top:3px}
@@ -149,7 +149,7 @@ img{max-width:100%}
   border-top:1px solid var(--line)}
 .sheet > .band:first-child,.sheet > section:first-child > .band{border-top:0}
 .band .spot{width:40px;height:40px}
-.band .spot img{width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
+.band .spot img{width:35px;height:35px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
 .band h2{font:700 17px var(--f-num);letter-spacing:.03em;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .band .count{font-size:12px;color:var(--fg2);opacity:.8}
 
@@ -743,7 +743,7 @@ td.frm{white-space:nowrap}
   .top{gap:8px}
   .top .iconbtn{width:36px;height:36px;border-radius:12px}
   .top .iconbtn svg{width:18px;height:18px}
-  .top .tlogo{width:40px;height:40px} .top .tlogo img{width:30px;height:30px}
+  .top .tlogo{width:40px;height:40px} .top .tlogo img{width:35px;height:35px}
   .top h1{font-size:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
 /* ---------- Orizzontale a tutto schermo (classifica e marcatori su iPhone) ---------- */
@@ -926,9 +926,10 @@ html[data-theme="light"] .aoc-t span{color:#6b3fd6}
 html[data-theme="light"] .aoc-x{background:rgba(20,35,80,.06);color:#4a5b80}
 .appver{text-align:center;font-size:12px;color:var(--mute);margin:26px 0 8px;letter-spacing:.02em}
 html[data-theme="light"] .yc:not(.now):not(.ico){background:#f1eaff;color:#5b34c4;border-color:rgba(124,77,255,.28)}
-html[data-theme="light"] img.wlimg{filter:brightness(0) saturate(100%) invert(14%) sepia(30%) saturate(1500%) hue-rotate(200deg) !important}
+html[data-theme="light"] img.wlimg{filter:drop-shadow(0 0 1px rgba(16,27,54,.85)) drop-shadow(0 0 1px rgba(16,27,54,.5)) !important}
 html[data-theme="light"] .wlbg{background:radial-gradient(circle at 50% 35%,#2b3d6e,#121c3c 75%) !important;border-color:rgba(20,35,80,.25) !important}
 html[data-theme="light"] .medal.wlbg{background:linear-gradient(150deg,color-mix(in srgb,var(--lc,#2f6bff) 78%,#fff),color-mix(in srgb,var(--lc,#2f6bff) 70%,#0b1430)) !important;border-color:rgba(255,255,255,.7) !important}
+.lg[data-l="ger.1"] .medal img,.lg[data-l="esp.1"] .medal img{width:68%;height:68%}
 </style>
 </head>
 <body>
@@ -3429,7 +3430,7 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "2.9", APP_DATE = "7 novembre 2026";
+const APP_VER = "3.0", APP_DATE = "7 novembre 2026";
 const verFoot = () => `<p class="appver">Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
 function viewStoria(){
   if (S.hist === "rec") return viewRecord();
