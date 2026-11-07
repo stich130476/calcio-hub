@@ -58,6 +58,7 @@ html.nob{--sab:0px}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
+html{background-color:var(--bg)}
 body{
   background:
     radial-gradient(70% 45% at 0% 0%, rgba(47,107,255,.55) 0%, transparent 70%),
@@ -3430,7 +3431,7 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "3.1", APP_DATE = "7 novembre 2026";
+const APP_VER = "3.2", APP_DATE = "7 novembre 2026";
 const verFoot = () => `<p class="appver" data-diag>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
 /* tocco sulla versione: misure dello schermo, servono per capire lo spazio vuoto in basso */
 document.addEventListener("click", e => {
