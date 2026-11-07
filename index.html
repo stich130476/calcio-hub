@@ -989,7 +989,7 @@ function dayLabel(off){
 const leagueLogo = s => (store.get("logos") || {})[s];
 const initials = name => esc((name || "?").replace(/[^A-Za-zÀ-ú ]/g, "").split(" ").filter(Boolean).slice(0,2).map(w => w[0]).join("").toUpperCase() || "?");
 /* Stemmi scuri (blu notte o neri) che sullo sfondo dell'app quasi spariscono: ricevono un alone chiaro. Id ESPN della squadra. */
-const DARK_CRESTS = new Set(["367"]);   // Tottenham
+const DARK_CRESTS = new Set(["367", "111"]);   // Tottenham, Juventus
 const isDarkCrest = url => { const m = /\/(\d+)\.png/.exec(url || ""); return !!m && DARK_CRESTS.has(m[1]); };
 function crest(url, name, cls = "crest"){
   const ini = initials(name);
