@@ -49,6 +49,7 @@ img{max-width:100%}
 .app{position:fixed;inset:0;display:grid;grid-template-columns:calc(var(--rail) + env(safe-area-inset-left,0px)) 1fr}
 
 /* ---------- Stemmi: luce morbida dietro, contorno luminoso sottile, colori intatti ---------- */
+.crest.dkc{background:radial-gradient(circle,#f4f6fb 0 66%,rgba(244,246,251,0) 70%);border-radius:50%;padding:10%;box-sizing:border-box;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))!important}
 .crest{width:28px;height:28px;object-fit:contain;flex:none;
   filter:drop-shadow(0 0 .7px rgba(255,255,255,.95)) drop-shadow(0 0 5px rgba(255,255,255,.22)) drop-shadow(0 2px 3px rgba(0,0,0,.5))}
 .crest.ph{display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.12);font:700 11px var(--f-num);color:var(--fg2);filter:none}
@@ -987,8 +988,12 @@ function dayLabel(off){
 }
 const leagueLogo = s => (store.get("logos") || {})[s];
 const initials = name => esc((name || "?").replace(/[^A-Za-zÀ-ú ]/g, "").split(" ").filter(Boolean).slice(0,2).map(w => w[0]).join("").toUpperCase() || "?");
+/* Stemmi scuri (blu notte o neri) che sullo sfondo dell'app quasi spariscono: ricevono un alone chiaro. Id ESPN della squadra. */
+const DARK_CRESTS = new Set(["367"]);   // Tottenham
+const isDarkCrest = url => { const m = /\/(\d+)\.png/.exec(url || ""); return !!m && DARK_CRESTS.has(m[1]); };
 function crest(url, name, cls = "crest"){
   const ini = initials(name);
+  if (url && isDarkCrest(url)) cls += " dkc";
   return url ? `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=&quot;${cls} ph&quot;>${ini}</span>'">`
              : `<span class="${cls} ph">${ini}</span>`;
 }
