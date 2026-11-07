@@ -916,6 +916,9 @@ html[data-theme="light"] .aoc-t span{color:#6b3fd6}
 html[data-theme="light"] .aoc-x{background:rgba(20,35,80,.06);color:#4a5b80}
 .appver{text-align:center;font-size:12px;color:var(--mute);margin:26px 0 8px;letter-spacing:.02em}
 html[data-theme="light"] .yc:not(.now):not(.ico){background:#f1eaff;color:#5b34c4;border-color:rgba(124,77,255,.28)}
+html[data-theme="light"] img.wlimg{filter:brightness(0) saturate(100%) invert(14%) sepia(30%) saturate(1500%) hue-rotate(200deg) !important}
+html[data-theme="light"] .wlbg{background:radial-gradient(circle at 50% 35%,#2b3d6e,#121c3c 75%) !important;border-color:rgba(20,35,80,.25) !important}
+html[data-theme="light"] .medal.wlbg{background:linear-gradient(150deg,color-mix(in srgb,var(--lc,#2f6bff) 78%,#fff),color-mix(in srgb,var(--lc,#2f6bff) 70%,#0b1430)) !important;border-color:rgba(255,255,255,.7) !important}
 </style>
 </head>
 <body>
@@ -1187,6 +1190,28 @@ function cupBadge(s){
   return l.b ? `<div class="cb" style="--lc:${l.c}">${TROPHY}<span>${esc(l.b)}</span></div>` : `<span class="ini">${esc((l.n || "?").split(" ").map(w => w[0]).join("").slice(0,2))}</span>`;
 }
 window.cupBadge = cupBadge;
+/* Loghi di lega bianchi: col tema giorno sparirebbero su fondo chiaro, quindi ricevono un fondo scuro colorato.
+   Il controllo guarda i colori del logo una sola volta e se lo ricorda; se non può, usa l'elenco fisso. */
+const WL_FIX = new Set(["uefa.champions","eng.1","fra.1","uefa.europa","uefa.europa.conf","uefa.super_cup","uefa.nations"]);
+const WL = store.get("wlogo") || {};
+function wlSlugOf(src){ const lg = store.get("logos") || {}; return Object.keys(lg).find(k => lg[k] === src); }
+function wlMark(img, white){ const par = img.closest(".medal,.spot,.tlogo"); if (par) par.classList.toggle("wlbg", !!white); else img.classList.toggle("wlimg", !!white); }
+function wlCheck(img){
+  const src = img.getAttribute("src") || ""; if (!src || !/^https?:/.test(src)) return;
+  const sl = wlSlugOf(src); if (!sl && !/leaguelogos|\/leagues?\//i.test(src)) return;
+  if (src in WL) return wlMark(img, WL[src]);
+  if (sl && WL_FIX.has(sl)) wlMark(img, true);
+  const t = new Image(); t.crossOrigin = "anonymous";
+  t.onload = () => { try {
+      const c = document.createElement("canvas"); c.width = c.height = 32; const x = c.getContext("2d"); x.drawImage(t, 0, 0, 32, 32);
+      const d = x.getImageData(0, 0, 32, 32).data; let n = 0, w = 0;
+      for (let i = 0; i < d.length; i += 4){ if (d[i+3] < 140) continue; n++; const mx = Math.max(d[i],d[i+1],d[i+2]), mn = Math.min(d[i],d[i+1],d[i+2]); if (mn > 200 && mx - mn < 40) w++; }
+      WL[src] = n > 20 && w / n > 0.5; store.set("wlogo", WL);
+      document.querySelectorAll("img").forEach(im => { if (im.getAttribute("src") === src) wlMark(im, WL[src]); });
+    } catch {} };
+  t.src = src;
+}
+document.addEventListener("load", e => { if (e.target && e.target.tagName === "IMG") wlCheck(e.target); }, true);
 function leagueBadge(l){
   const logo = leagueLogo(l.s);
   if (logo) return `<img src="${esc(logo)}" alt="">`;
@@ -2298,7 +2323,7 @@ function teamInfoBox(f){
    Nome dello stadio: ESPN (sede delle partite in casa). Capienza e fondazione: Wikidata, con controlli:
    la voce deve essere una squadra di calcio della nazione giusta, e la capienza si mostra solo se lo stadio
    di Wikidata è lo stesso indicato da ESPN. Se qualcosa non torna, quel dato non compare. */
-const TINFO = new Map(Object.entries(store.get("tinfo5") || {}));
+const TINFO = new Map(Object.entries(store.get("tinfo6") || {}));
 const LEAGUE_COUNTRY = { ita:["Q38"], eng:["Q145","Q21"], sco:["Q145","Q22"], esp:["Q29"], ger:["Q183"], fra:["Q142"], ned:["Q55"], por:["Q45"], bel:["Q31"], tur:["Q43"], aut:["Q40"], sui:["Q39"] };
 function teamInfoHtml(v){
   if (!v) return "";
@@ -2365,28 +2390,30 @@ async function teamInfo(f){
       /* più date di fondazione (squadre rifondate dopo un fallimento): vale la più antica */
       const ys = ((e.claims || {}).P571 || []).filter(c => c.rank !== "deprecated").map(c => { const t = c.mainsnak.datavalue && c.mainsnak.datavalue.value.time, m = t && /^\+?(\d{4})/.exec(t); return m ? +m[1] : 0; }).filter(Boolean);
       if (ys.length) out.founded = Math.min(...ys);
-      const vid = (bestClaim(e, "P115") || {}).mainsnak; const sid = vid && vid.datavalue && vid.datavalue.value.id;
-      if (sid){
-        const se = ((await wd(`action=wbgetentities&ids=${sid}&props=claims|labels|sitelinks&languages=it|en&sitefilter=itwiki|enwiki`)).entities || {})[sid];
+      /* tutti gli stadi della squadra (anche quelli storici): si sceglie quello che corrisponde al nome dato da ESPN */
+      const vc = ((e.claims || {}).P115 || []).filter(c => c.rank !== "deprecated" && c.mainsnak && c.mainsnak.datavalue)
+        .sort((x, y) => (y.rank === "preferred") - (x.rank === "preferred") || !!(x.qualifiers || {}).P582 - !!(y.qualifiers || {}).P582);
+      const sids = [...new Set(vc.map(c => c.mainsnak.datavalue.value.id))].slice(0, 6);
+      if (sids.length){
+        const ents = (await wd(`action=wbgetentities&ids=${sids.join("|")}&props=claims|labels|aliases|sitelinks&languages=it|en&sitefilter=itwiki|enwiki`)).entities || {};
+        const names = x => [...Object.values(x.labels || {}).map(l => l.value), ...Object.values(x.aliases || {}).flat().map(l => l.value)];
+        const match = x => { const b = words(out.stadium); return names(x).some(l => words(l).some(w => b.includes(w))); };
+        const se = out.stadium ? sids.map(i => ents[i]).find(x => x && match(x)) : ents[sids[0]];
         if (se){
-          const labs = Object.values(se.labels || {}).map(l => l.value);
-          const same = !out.stadium || labs.some(l => { const a = words(l), b = words(out.stadium); return a.some(w => b.includes(w)); });
           const cp = bestClaim(se, "P1083"), amt = cp && cp.mainsnak.datavalue && +cp.mainsnak.datavalue.value.amount;
-          if (same){
-            if (amt > 0 && !out.cap) out.cap = Math.round(amt);
-            const op = bestClaim(se, "P1619") || bestClaim(se, "P571"), ot = op && op.mainsnak.datavalue && op.mainsnak.datavalue.value.time;
-            const oy = ot && /^\+?(\d{4})/.exec(ot); if (oy && +oy[1] > 1850 && +oy[1] <= new Date().getFullYear()) out.opened = +oy[1];
-            if (!out.stadium) out.stadium = (se.labels.it || se.labels.en || {}).value || null;
-            const sl = se.sitelinks || {}, w = sl.itwiki ? ["it", sl.itwiki.title] : sl.enwiki ? ["en", sl.enwiki.title] : null;
-            if (w) out.wiki = `https://${w[0]}.wikipedia.org/wiki/${encodeURIComponent(w[1].replace(/ /g, "_"))}`;
-          }
+          if (amt > 0 && !out.cap) out.cap = Math.round(amt);
+          const op = bestClaim(se, "P1619") || bestClaim(se, "P571"), ot = op && op.mainsnak.datavalue && op.mainsnak.datavalue.value.time;
+          const oy = ot && /^\+?(\d{4})/.exec(ot); if (oy && +oy[1] > 1850 && +oy[1] <= new Date().getFullYear()) out.opened = +oy[1];
+          if (!out.stadium) out.stadium = ((se.labels || {}).it || (se.labels || {}).en || {}).value || null;
+          const sl = se.sitelinks || {}, w = sl.itwiki ? ["it", sl.itwiki.title] : sl.enwiki ? ["en", sl.enwiki.title] : null;
+          if (w) out.wiki = `https://${w[0]}.wikipedia.org/wiki/${encodeURIComponent(w[1].replace(/ /g, "_"))}`;
         }
       }
     }
   } catch {}
   const fx = FOUNDED_FIX[plainW(f.full || f.name)] || FOUNDED_FIX[plainW(f.name)];
   if (fx) out.founded = fx;
-  TINFO.set(k, out); store.set("tinfo5", Object.fromEntries(TINFO));
+  TINFO.set(k, out); store.set("tinfo6", Object.fromEntries(TINFO));
   return out;
 }
 const seasonMemo = new Map();
@@ -3392,7 +3419,7 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "2.7", APP_DATE = "7 novembre 2026";
+const APP_VER = "2.8", APP_DATE = "7 novembre 2026";
 const verFoot = () => `<p class="appver">Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
 function viewStoria(){
   if (S.hist === "rec") return viewRecord();
