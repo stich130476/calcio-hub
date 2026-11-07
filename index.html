@@ -3430,8 +3430,16 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "3.0", APP_DATE = "7 novembre 2026";
-const verFoot = () => `<p class="appver">Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
+const APP_VER = "3.1", APP_DATE = "7 novembre 2026";
+const verFoot = () => `<p class="appver" data-diag>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
+/* tocco sulla versione: misure dello schermo, servono per capire lo spazio vuoto in basso */
+document.addEventListener("click", e => {
+  const v = e.target.closest("[data-diag]"); if (!v) return;
+  const pr = document.createElement("div"); pr.style.cssText = "position:fixed;bottom:0;padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden";
+  document.body.appendChild(pr); const sab = pr.offsetHeight; pr.remove();
+  const tb = document.querySelector(".tabs"), tr = tb ? tb.getBoundingClientRect() : null;
+  v.textContent = `Misure: pagina ${innerWidth}×${innerHeight} · schermo ${screen.width}×${screen.height} · margine basso ${sab} · barra ${tr ? Math.round(tr.top) + "-" + Math.round(tr.bottom) : "-"} · ${document.documentElement.classList.contains("nob") ? "nob" : "std"} · v${APP_VER}`;
+});
 function viewStoria(){
   if (S.hist === "rec") return viewRecord();
   if (S.hist === "ao") return viewAccadde();
