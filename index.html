@@ -941,7 +941,7 @@ const store = {
 };
 const mem = new Map();
 /* Nomi squadra: "Inter" ovunque (ESPN scrive "Inter Milan" o "Internazionale") */
-const NAME_FIX = { "inter milan":"Inter", "internazionale":"Inter", "fc internazionale milano":"Inter", "inter de milán":"Inter", "inter milano":"Inter" };
+const NAME_FIX = { "inter milan":"Inter", "internazionale":"Inter", "fc internazionale milano":"Inter", "inter de milán":"Inter", "inter milano":"Inter", "spurs":"Tottenham" };
 const NAME_KEYS = new Set(["displayName","shortDisplayName","name","location","nickname","shortName","team","tn"]);
 function fixNames(o){
   if (!o || typeof o !== "object" || o.__nf) return o;
