@@ -540,6 +540,8 @@ body.lock .main{overflow:hidden}
 .rkn{display:flex!important;align-items:center;gap:8px;min-width:0;text-align:left!important}
 .rkn .crest{width:24px;height:24px;flex:none}
 .rkn b{font-size:15px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rkr.me{background:rgba(255,201,77,.10)} .rkr.me .rkn b{color:#ffd978}
+.rkfull .rkr{padding-top:7px;padding-bottom:7px} .rkfull .rkp{width:28px;height:28px;font-size:14px}
 .rkgap{padding:8px 16px 6px;border-top:1px solid var(--line);font-size:12px;color:var(--mute);text-align:center}
 .mh .calh{font-size:10.5px;letter-spacing:.06em;color:var(--c-blue);font-weight:700}
 .favspot{width:40px;height:40px;color:#ffd978} .favspot svg{width:22px;height:22px;filter:drop-shadow(0 2px 6px rgba(240,169,42,.5))}
@@ -1692,8 +1694,8 @@ async function viewStat(){
 const STATS_IT = [["possessionPct","Possesso palla","%"],["totalShots","Tiri"],["shotsOnTarget","Tiri in porta"],["wonCorners","Calci d'angolo"],
   ["foulsCommitted","Falli"],["offsides","Fuorigioco"],["saves","Parate"],["yellowCards","Ammonizioni"],["redCards","Espulsioni"]];
 /* Classifica nella scheda partita: etichetta "12° · 11 pt" sotto il nome, che apre e chiude un riquadro con i dettagli */
-const RK = new Map(); let rkLast = null, rkOpenId = null;   // aperto solo dopo un tocco, e solo per quella partita
-const rkIsOpen = () => !!rkLast && rkOpenId === String(rkLast.m.id);
+const RK = new Map(); let rkLast = null, rkOpenId = null, rkStep = 0;   // 1° tocco: le due squadre · 2° tocco: classifica completa · 3° tocco: chiude
+const rkIsOpen = () => !!rkLast && rkOpenId === String(rkLast.m.id) && rkStep > 0;
 const rkData = slug => { const o = RK.get(slug); return o && Date.now() - o.t < 15 * 60e3 ? o.map : null; };
 const rkZone = (slug, pos) => { const z = (ZONES[slug] || []).find(([a, b]) => pos >= a && pos <= b); return z ? ZINFO[z[2]][1] : "rgba(255,255,255,.28)"; };
 function rkChip(tid, slug){
@@ -1704,6 +1706,7 @@ function rkChip(tid, slug){
 }
 function rkBox(m, slug){
   const map = rkData(slug); if (!map || !rkIsOpen()) return "";
+  if (rkStep === 2) return rkFull(m, slug, map);
   const rows = [m.home, m.away].map(t => ({ t, st:map.get(String(t.id)) })).filter(x => x.st && x.st.rank).sort((a,b) => a.st.rank - b.st.rank);
   if (rows.length < 2) return "";
   const L = BY[slug] || {}, n = v => v == null || isNaN(v) ? "–" : v;
@@ -1714,10 +1717,28 @@ function rkBox(m, slug){
     ${rows.map(({ t, st }) => { const d = dr(st); return `<div class="rkr"><span class="rkp" style="--zc:${rkZone(slug, st.rank)}">${st.rank}</span><span class="rkn">${crest(t.logo, t.name)}<b>${esc(t.name)}</b></span><span class="pt">${n(st.points)}</span><span>${n(st.gamesPlayed)}</span><span class="${d > 0 ? "p" : d < 0 ? "n" : ""}">${d > 0 ? "+" + d : n(d)}</span></div>`; }).join("")}
     <div class="rkgap">${gap ? `${gap} ${gap === 1 ? "punto" : "punti"} di distacco` : "Stessi punti in classifica"}</div></div></div>`;
 }
+function rkFull(m, slug, map){
+  const o = RK.get(slug) || {}, teams = o.teams || new Map(), L = BY[slug] || {}, n = v => v == null || isNaN(v) ? "–" : v;
+  const dr = st => st.pointDifferential ?? ((st.pointsFor ?? 0) - (st.pointsAgainst ?? 0));
+  const mine = new Set([String(m.home.id), String(m.away.id)]);
+  const rows = [...map.entries()].filter(([, st]) => st.rank).sort((a,b) => a[1].rank - b[1].rank);
+  return `<div class="blk"><h3>Classifica completa · ${esc(L.n || "")}</h3><div class="sheet rkt rkfull">
+    <div class="rkr hd"><span></span><span></span><span>Pt</span><span>G</span><span>DR</span></div>
+    ${rows.map(([id, st]) => { const t = teams.get(id) || {}, d = dr(st), me = mine.has(id);
+      return `<div class="rkr${me ? " me" : ""}"><span class="rkp" style="--zc:${rkZone(slug, st.rank)}">${st.rank}</span><span class="rkn">${crest(t.logo || "", t.name || "")}<b>${esc(t.name || "")}</b></span><span class="pt">${n(st.points)}</span><span>${n(st.gamesPlayed)}</span><span class="${d > 0 ? "p" : d < 0 ? "n" : ""}">${d > 0 ? "+" + d : n(d)}</span></div>`; }).join("")}
+    <div class="rkgap">Tocca di nuovo la posizione per chiudere</div></div></div>`;
+}
 async function rkFill(m, slug, ev){
   const L = BY[slug];
   if (!L || L.cup || L.euro || slug === "ita.3") return;
-  if (!rkData(slug)){ const map = await officialTable(slug); if (!map) return; RK.set(slug, { t:Date.now(), map }); }
+  if (!rkData(slug)){
+    const map = await officialTable(slug); if (!map) return;
+    const teams = new Map();
+    try { const { data } = await getJSON(`${API}/v2/sports/soccer/${slug}/standings`, 900);
+      const walk = o => { if (!o) return; ((o.standings || {}).entries || []).forEach(e => { const t = e.team || {}; teams.set(String(t.id), { name:t.shortDisplayName || t.displayName || "", logo:(t.logos && t.logos[0] && t.logos[0].href) || t.logo || "" }); }); (o.children || []).forEach(walk); };
+      walk(data); } catch {}
+    RK.set(slug, { t:Date.now(), map, teams });
+  }
   if (openEv !== ev) return;
   document.querySelectorAll("#ovB .rkslot").forEach(sl => { if (!sl.firstChild) sl.innerHTML = rkChip(sl.dataset.t, slug); });
   const bx = document.getElementById("rkbox"); if (bx) bx.innerHTML = rkBox(m, slug);
@@ -1725,7 +1746,9 @@ async function rkFill(m, slug, ev){
 document.addEventListener("click", e => {
   const c = e.target.closest("[data-rkc]"); if (!c) return;
   e.stopPropagation(); e.preventDefault();
-  const open = !rkIsOpen(); rkOpenId = open && rkLast ? String(rkLast.m.id) : null;
+  const same = rkLast && rkOpenId === String(rkLast.m.id);
+  rkStep = same ? (rkStep + 1) % 3 : 1; rkOpenId = rkLast ? String(rkLast.m.id) : null;
+  const open = rkStep > 0;
   document.querySelectorAll("#ovB [data-rkc]").forEach(b => b.setAttribute("aria-expanded", String(open)));
   const bx = document.getElementById("rkbox"); if (bx && rkLast) bx.innerHTML = rkBox(rkLast.m, rkLast.slug);
 }, true);
@@ -1816,7 +1839,7 @@ function removeSheet(id){
 }
 const closeMatch = () => removeSheet("ov");
 async function openMatch(slug, id, again){
-  if (!again){ makeSheet("ov", 40, "Dettagli partita"); openEv = id; rkOpenId = null; }
+  if (!again){ makeSheet("ov", 40, "Dettagli partita"); openEv = id; rkOpenId = null; rkStep = 0; }
   let r;
   try { r = await getJSON(`${API}/site/v2/sports/soccer/${slug}/summary?event=${id}`, 20); }
   catch {
