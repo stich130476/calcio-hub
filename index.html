@@ -818,7 +818,7 @@ html[data-theme="light"]{color-scheme:light}
 html[data-theme="light"]:root,html[data-theme="light"]{
   --bg:#eef2fb;--sheet:rgba(255,255,255,.80);--sheet-hi:rgba(15,30,70,.02);
   --line:rgba(20,35,80,.09);--line2:rgba(20,35,80,.15);
-  --fg:#101b36;--fg2:#34466a;--mute:#6b7b98;
+  --fg:#101b36;--fg2:#34466a;--mute:#5a6a89;
   --sky:#0b8fd6;--gold:#c48a00;--live:#0fa84a;
   --c-blue:#0b84d6;--c-gold:#c48a00;--c-green:#0f9a6c;--c-orange:#e5700a;--c-purple:#7b4fd6}
 html[data-theme="light"] body{
@@ -931,6 +931,44 @@ html[data-theme="light"] img.wlimg{filter:drop-shadow(0 0 1px rgba(16,27,54,.85)
 html[data-theme="light"] .wlbg{background:radial-gradient(circle at 50% 35%,#2b3d6e,#121c3c 75%) !important;border-color:rgba(20,35,80,.25) !important}
 html[data-theme="light"] .medal.wlbg{background:linear-gradient(150deg,color-mix(in srgb,var(--lc,#2f6bff) 78%,#fff),color-mix(in srgb,var(--lc,#2f6bff) 70%,#0b1430)) !important;border-color:rgba(255,255,255,.7) !important}
 .lg[data-l="ger.1"] .medal img,.lg[data-l="esp.1"] .medal img{width:68%;height:68%}
+/* Per orario: una scheda per giorno */
+.dayc{margin-bottom:12px;overflow:hidden}
+.dayhd{display:flex;align-items:center;gap:12px;padding:12px 16px 10px}
+.dcal{flex:none;width:44px;height:48px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;
+  background:rgba(255,255,255,.07);border:1px solid var(--line2)}
+.dcal small{display:block;width:100%;text-align:center;font:800 9.5px/1 var(--f-num);letter-spacing:.12em;text-transform:uppercase;padding:4px 0 3px;background:rgba(255,255,255,.10);color:var(--fg2)}
+.dcal b{font:800 21px/1 var(--f-num);color:var(--fg);padding:3px 0 4px}
+.dlab{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.dlab b{font:800 18px/1.1 var(--f-num);color:var(--fg)}
+.dlab span{font-size:12.5px;color:var(--mute)} .dlab span::first-letter{text-transform:uppercase}
+.dcnt{flex:none;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.06)}
+.dayc.now .dcal{border-color:transparent;background:linear-gradient(180deg,#3d8bff,#2259e6)}
+.dayc.now .dcal small{background:rgba(0,0,0,.18);color:#e6efff} .dayc.now .dcal b{color:#fff}
+.dayc.now .dlab b{color:#6fb0ff}
+.dayc .rows .m:first-child{border-top:1px solid var(--line)}
+.mid .cmp{white-space:normal;max-width:88px;margin-left:auto;margin-right:auto;line-height:1.15;text-align:center}
+html[data-theme="light"] .dcal{background:#fff;border-color:rgba(20,35,80,.12);box-shadow:0 2px 8px rgba(30,50,110,.10)}
+html[data-theme="light"] .dcal small{background:#e9eefb;color:#4a5b80}
+html[data-theme="light"] .dayc.now .dlab b{color:#1d5fe0}
+html[data-theme="light"] .dcnt{background:rgba(20,35,80,.06);color:#4a5b80}
+/* Tema giorno: testi chiari pensati per lo sfondo scuro */
+
+html[data-theme="light"] .lp b{color:#1b74c4}
+html[data-theme="light"] .abadge{background:var(--lc)!important;color:#fff!important}
+html[data-theme="light"] .pc-c{background:rgba(20,35,80,.07);color:var(--fg2)}
+html[data-theme="light"] .pc-c.fav{background:#fff1c9;color:#8a5a00}
+html[data-theme="light"] .trb > b{color:#a86c00}
+html[data-theme="light"] .res.w{background:#d4f4e6;color:#0b7a52} html[data-theme="light"] .res.d{background:rgba(20,35,80,.08);color:var(--fg2)} html[data-theme="light"] .res.l{background:#fde0e5;color:#b4233c}
+html[data-theme="light"] .xb.sup{background:#ffe9d6;color:#b35a00;box-shadow:inset 0 0 0 1px rgba(230,120,20,.45)}
+html[data-theme="light"] .xb.rig{background:#fff1c9;color:#8a5a00;box-shadow:inset 0 0 0 1px rgba(200,150,20,.5)}
+html[data-theme="light"] .tlt.rec{color:#a86c00}
+html[data-theme="light"] .ar-i{background:#ece3ff;color:#6b3fd6}
+html[data-theme="light"] .favtog.on,html[data-theme="light"] .mini.on{color:#c48a00;border-color:rgba(196,138,0,.45)}
+html[data-theme="light"] .mini.rm{color:#c0283f}
+html[data-theme="light"] .mh .calh{color:#1d5fe0}
+.m .t > span:not(.spot){white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.18;text-overflow:ellipsis}
+.dayc .m{gap:7px;padding:11px 10px}
+@media (max-width:480px){ .m .t > span:not(.spot){font-size:13.5px} .m .spot{width:32px;height:32px} .m .spot .crest{width:23px;height:23px} .m{gap:7px;padding-left:10px;padding-right:10px} }
 </style>
 </head>
 <body>
@@ -1046,27 +1084,27 @@ const TZ = "Europe/Rome";
 /* ---------- Competizioni (c = colore della fascia) ---------- */
 const LEAGUES = [
   { s:"ita.1", n:"Serie A", c:"#2f6bff", main:true },
-  { s:"uefa.champions", n:"Champions League", c:"#3a56d4", main:true, euro:true },
+  { s:"uefa.champions", sh:"Champions", n:"Champions League", c:"#3a56d4", main:true, euro:true },
   { s:"ita.coppa_italia", n:"Coppa Italia", c:"#13a35a", main:true, cup:true },
-  { s:"ita.super_cup", n:"Supercoppa Italiana", c:"#c9a227", main:true, cup:true, b:"SUPER", tro:true },
+  { s:"ita.super_cup", sh:"Supercoppa", n:"Supercoppa Italiana", c:"#c9a227", main:true, cup:true, b:"SUPER", tro:true },
   { s:"eng.1", n:"Premier League", c:"#9b3cff", main:true },
   { s:"esp.1", n:"Liga", c:"#ff4b4b", main:true },
   { s:"ger.1", n:"Bundesliga", c:"#e5263a", main:true },
   { s:"fra.1", n:"Ligue 1", c:"#1fb6ff", main:true },
   { s:"uefa.europa", n:"Europa League", c:"#ff8a1f", euro:true },
-  { s:"uefa.europa.conf", n:"Conference League", c:"#19c26b", euro:true },
-  { s:"uefa.super_cup", n:"Supercoppa UEFA", c:"#4f6fe0", cup:true, euro:true },
+  { s:"uefa.europa.conf", sh:"Conference", n:"Conference League", c:"#19c26b", euro:true },
+  { s:"uefa.super_cup", sh:"Supercoppa UEFA", n:"Supercoppa UEFA", c:"#4f6fe0", cup:true, euro:true },
   { s:"ned.1", n:"Eredivisie", c:"#ff6a1a" },
-  { s:"bel.1", n:"Jupiler Pro League", c:"#f0b400" },
-  { s:"sco.1", n:"Premiership scozzese", c:"#6d5cff" },
+  { s:"bel.1", sh:"Belgio", n:"Jupiler Pro League", c:"#f0b400" },
+  { s:"sco.1", sh:"Scozia", n:"Premiership scozzese", c:"#6d5cff" },
   { s:"ita.2", n:"Serie B", c:"#00b3a4" },
   { s:"ita.3", n:"Serie C", c:"#1b8fe0" },
-  { s:"uefa.nations", n:"Nations League", c:"#2f5bff", cup:true },
+  { s:"uefa.nations", sh:"Nations League", n:"Nations League", c:"#2f5bff", cup:true },
   { s:"eng.fa", n:"FA Cup", c:"#d0021b", cup:true, dom:true },
   { s:"eng.league_cup", n:"Carabao Cup", c:"#00a651", cup:true, dom:true },
   { s:"eng.charity", n:"Community Shield", c:"#7a3cff", cup:true, dom:true, b:"SHIELD", tro:true },
   { s:"esp.copa_del_rey", n:"Copa del Rey", c:"#c8102e", cup:true, dom:true },
-  { s:"esp.super_cup", n:"Supercopa de España", c:"#e3a21a", cup:true, dom:true },
+  { s:"esp.super_cup", sh:"Supercopa", n:"Supercopa de España", c:"#e3a21a", cup:true, dom:true },
   { s:"ger.dfb_pokal", n:"DFB-Pokal", c:"#1d9a46", cup:true, dom:true },
   { s:"ger.super_cup", n:"Supercup tedesca", c:"#d4af37", cup:true, dom:true, b:"SUPER", tro:true },
   { s:"fra.coupe_de_france", n:"Coupe de France", c:"#2457d6", cup:true, dom:true },
@@ -1539,7 +1577,7 @@ function matchRow(m, l, showComp){
   else if (m.state === "ppd") mid = `<span class="pill pre">—</span><span class="st">Rinviata</span>`;
   else mid = `<span class="pill ${m.state}">${m.state === "in" ? '<span class="dot"></span>' : ""}${esc(m.home.score ?? "")} – ${esc(m.away.score ?? "")}</span><span class="st ${m.state === "in" ? "live" : ""}">${esc(statusIt(m))}</span>${extraBadge(m)}`;
   mid += bigTag(m, l);
-  if (showComp) mid += `<span class="cmp">${leagueLogo(l.s) ? `<img src="${esc(leagueLogo(l.s))}" alt="">` : ""}${esc(l.n)}</span>`;
+  if (showComp) mid += `<span class="cmp">${leagueLogo(l.s) ? `<img src="${esc(leagueLogo(l.s))}" alt="">` : ""}${esc(l.sh || l.n)}</span>`;
   return `<div class="m" role="button" tabindex="0" data-ev="${esc(m.id)}" data-sl="${esc(m.slug)}" data-h="${esc(m.home.id)}" data-a="${esc(m.away.id)}">
     <div class="t h${ita(m.home)}${res(m.home, m.away)}"><span>${esc(m.home.name)}</span><span class="spot">${crest(m.home.logo, m.home.name)}</span></div>
     <div class="mid">${mid}</div>
@@ -1756,18 +1794,21 @@ async function viewMieAll(){
   stamp(Math.min(...res.map(x => (x.r && x.r.at) || Date.now())));
   if (!all.length){ box.innerHTML = `<div class="sheet">${emptyBox("Nessuna partita in programma", "Il calendario delle tue squadre non è ancora disponibile.", true)}</div>`; return; }
   const today = dayKey(new Date());
-  let html = `<div class="sheet">`, last = "";
-  for (const { m } of all){
-    const k = dayKey(m.date);
-    if (k !== last){
-      const dd = Math.round((keyDate(k) - keyDate(today)) / 864e5);
-      const lab = m.state === "in" ? "In corso" : dd === 0 ? "Oggi" : dd === 1 ? "Domani" : fmt(m.date, { weekday:"long" });
-      html += `<div class="band daybd"><h2>${esc(lab.charAt(0).toUpperCase() + lab.slice(1))}</h2><span class="count">${esc(fmt(m.date, { day:"numeric", month:"long" }))}</span></div>`;
-      last = k;
-    }
-    html += `<div class="rows">${matchRow(m, BY[m.slug] || { s:m.slug, n:m.slug === "ita.3" ? "Serie C" : m.slug }, true)}</div>`;
+  const groups = [];
+  for (const x of all){ const k = dayKey(x.m.date); if (!groups.length || groups[groups.length-1].k !== k) groups.push({ k, ms:[] }); groups[groups.length-1].ms.push(x.m); }
+  let html = "";
+  for (const g of groups){
+    const m0 = g.ms[0], dd = Math.round((keyDate(g.k) - keyDate(today)) / 864e5);
+    const live = g.ms.some(m => m.state === "in");
+    const wd = fmt(m0.date, { weekday:"long" }), lab = live ? "In corso" : dd === 0 ? "Oggi" : dd === 1 ? "Domani" : wd;
+    const sub = (dd === 0 || dd === 1 || live) ? wd : "tra " + dd + " giorni";
+    html += `<div class="sheet dayc${dd === 0 || live ? " now" : ""}"><div class="dayhd">
+      <span class="dcal"><small>${esc(fmt(m0.date, { month:"short" }).replace(".", ""))}</small><b>${esc(fmt(m0.date, { day:"numeric" }))}</b></span>
+      <div class="dlab"><b>${esc(lab.charAt(0).toUpperCase() + lab.slice(1))}</b><span>${esc(sub)}</span></div>
+      <span class="dcnt">${g.ms.length} ${g.ms.length === 1 ? "partita" : "partite"}</span></div>
+      <div class="rows">${g.ms.map(m => matchRow(m, BY[m.slug] || { s:m.slug, n:m.slug === "ita.3" ? "Serie C" : m.slug }, true)).join("")}</div></div>`;
   }
-  box.innerHTML = html + `</div><p class="note" style="text-align:center;margin-top:12px">Tutte le prossime partite delle tue squadre, in ordine di data e ora.</p>`;
+  box.innerHTML = html + `<p class="note" style="text-align:center;margin-top:12px">Tutte le prossime partite delle tue squadre, in ordine di data e ora.</p>`;
   clearTimeout(refreshTimer);
   if (all.some(x => x.m.state === "in")) refreshTimer = setTimeout(() => { if (S.tab === "mie" && S.fav === "all" && !openEv) viewMieAll(); }, 30000);
 }
@@ -3431,7 +3472,7 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "3.2", APP_DATE = "7 novembre 2026";
+const APP_VER = "3.3", APP_DATE = "7 novembre 2026";
 const verFoot = () => `<p class="appver" data-diag>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
 /* tocco sulla versione: misure dello schermo, servono per capire lo spazio vuoto in basso */
 document.addEventListener("click", e => {
