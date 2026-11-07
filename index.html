@@ -2376,7 +2376,7 @@ function teamInfoBox(f){
    Nome dello stadio: ESPN (sede delle partite in casa). Capienza e fondazione: Wikidata, con controlli:
    la voce deve essere una squadra di calcio della nazione giusta, e la capienza si mostra solo se lo stadio
    di Wikidata è lo stesso indicato da ESPN. Se qualcosa non torna, quel dato non compare. */
-const TINFO = new Map(Object.entries(store.get("tinfo6") || {}));
+const TINFO = new Map(Object.entries(store.get("tinfo7") || {}));
 const LEAGUE_COUNTRY = { ita:["Q38"], eng:["Q145","Q21"], sco:["Q145","Q22"], esp:["Q29"], ger:["Q183"], fra:["Q142"], ned:["Q55"], por:["Q45"], bel:["Q31"], tur:["Q43"], aut:["Q40"], sui:["Q39"] };
 function teamInfoHtml(v){
   if (!v) return "";
@@ -2451,7 +2451,9 @@ async function teamInfo(f){
         const ents = (await wd(`action=wbgetentities&ids=${sids.join("|")}&props=claims|labels|aliases|sitelinks&languages=it|en&sitefilter=itwiki|enwiki`)).entities || {};
         const names = x => [...Object.values(x.labels || {}).map(l => l.value), ...Object.values(x.aliases || {}).flat().map(l => l.value)];
         const match = x => { const b = words(out.stadium); return names(x).some(l => words(l).some(w => b.includes(w))); };
-        const se = out.stadium ? sids.map(i => ents[i]).find(x => x && match(x)) : ents[sids[0]];
+        const cur = vc.filter(c => !(c.qualifiers || {}).P582).map(c => c.mainsnak.datavalue.value.id);
+        /* prima quello col nome uguale a ESPN; se i nomi non coincidono (es. italiano/inglese) vale lo stadio attuale indicato da Wikidata */
+        const se = (out.stadium && sids.map(i => ents[i]).find(x => x && match(x))) || ents[cur[0]] || (!out.stadium && ents[sids[0]]) || null;
         if (se){
           const cp = bestClaim(se, "P1083"), amt = cp && cp.mainsnak.datavalue && +cp.mainsnak.datavalue.value.amount;
           if (amt > 0 && !out.cap) out.cap = Math.round(amt);
@@ -2466,7 +2468,7 @@ async function teamInfo(f){
   } catch {}
   const fx = FOUNDED_FIX[plainW(f.full || f.name)] || FOUNDED_FIX[plainW(f.name)];
   if (fx) out.founded = fx;
-  TINFO.set(k, out); store.set("tinfo6", Object.fromEntries(TINFO));
+  TINFO.set(k, out); store.set("tinfo7", Object.fromEntries(TINFO));
   return out;
 }
 const seasonMemo = new Map();
@@ -3472,7 +3474,7 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "3.3", APP_DATE = "7 novembre 2026";
+const APP_VER = "3.4", APP_DATE = "7 novembre 2026";
 const verFoot = () => `<p class="appver" data-diag>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
 /* tocco sulla versione: misure dello schermo, servono per capire lo spazio vuoto in basso */
 document.addEventListener("click", e => {
