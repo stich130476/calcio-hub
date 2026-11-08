@@ -3,7 +3,7 @@
  "campionato": "Serie C · Girone C",
  "stagione": "2026-27",
  "fonte": "inter.it (calendario e risultati ufficiali)",
- "aggiornato": "2026-11-04",
+ "aggiornato": "2026-11-09",
  "partite": [
   {
    "g": 1,
@@ -118,7 +118,9 @@
    "d": "2026-11-07T14:30:00+01:00",
    "ora": true,
    "casa": "Inter U23",
-   "ospite": "Salernitana"
+   "ospite": "Salernitana",
+   "gc": 1,
+   "go": 0
   },
   {
    "g": 14,
@@ -319,22 +321,33 @@
  },
  "fonte_stemmi": "FotMob",
  "classifica": {
-  "aggiornata": "2026-11-04",
-  "fonte": "FotMob (Eurosport non accessibile; dati verificati per coerenza con la 11ª giornata)",
+  "aggiornata": "2026-11-09",
+  "fonte": "FotMob",
   "righe": [
    {
     "pos": 1,
     "squadra": "Potenza",
-    "g": 12,
-    "v": 9,
+    "g": 13,
+    "v": 10,
     "n": 2,
     "p": 1,
-    "gf": 32,
-    "gs": 17,
-    "pt": 29
+    "gf": 35,
+    "gs": 18,
+    "pt": 32
    },
    {
     "pos": 2,
+    "squadra": "Catania",
+    "g": 13,
+    "v": 7,
+    "n": 1,
+    "p": 5,
+    "gf": 26,
+    "gs": 13,
+    "pt": 22
+   },
+   {
+    "pos": 3,
     "squadra": "Bari",
     "g": 12,
     "v": 6,
@@ -345,51 +358,73 @@
     "pt": 22
    },
    {
-    "pos": 3,
-    "squadra": "Audace Cerignola",
-    "g": 12,
-    "v": 6,
-    "n": 2,
-    "p": 4,
-    "gf": 19,
-    "gs": 11,
-    "pt": 20
-   },
-   {
     "pos": 4,
-    "squadra": "Sorrento",
-    "g": 12,
-    "v": 6,
-    "n": 2,
-    "p": 4,
-    "gf": 16,
-    "gs": 13,
-    "pt": 20
+    "squadra": "Scafatese",
+    "g": 13,
+    "v": 5,
+    "n": 6,
+    "p": 2,
+    "gf": 22,
+    "gs": 17,
+    "pt": 21
    },
    {
     "pos": 5,
-    "squadra": "Catania",
-    "g": 12,
+    "squadra": "Audace Cerignola",
+    "g": 13,
     "v": 6,
-    "n": 1,
+    "n": 2,
     "p": 5,
-    "gf": 24,
-    "gs": 13,
-    "pt": 19
+    "gf": 20,
+    "gs": 15,
+    "pt": 20
    },
    {
     "pos": 6,
     "squadra": "Monopoli",
-    "g": 12,
+    "g": 13,
     "v": 5,
-    "n": 4,
+    "n": 5,
     "p": 3,
     "gf": 13,
     "gs": 9,
-    "pt": 19
+    "pt": 20
    },
    {
     "pos": 7,
+    "squadra": "Inter U23",
+    "g": 13,
+    "v": 6,
+    "n": 2,
+    "p": 5,
+    "gf": 22,
+    "gs": 20,
+    "pt": 20
+   },
+   {
+    "pos": 8,
+    "squadra": "Casertana",
+    "g": 13,
+    "v": 5,
+    "n": 5,
+    "p": 3,
+    "gf": 17,
+    "gs": 15,
+    "pt": 20
+   },
+   {
+    "pos": 9,
+    "squadra": "Sorrento",
+    "g": 13,
+    "v": 6,
+    "n": 2,
+    "p": 5,
+    "gf": 16,
+    "gs": 15,
+    "pt": 20
+   },
+   {
+    "pos": 10,
     "squadra": "Picerno",
     "g": 12,
     "v": 6,
@@ -400,40 +435,18 @@
     "pt": 18
    },
    {
-    "pos": 8,
-    "squadra": "Scafatese",
-    "g": 12,
-    "v": 4,
-    "n": 6,
-    "p": 2,
-    "gf": 18,
-    "gs": 16,
-    "pt": 18
-   },
-   {
-    "pos": 9,
-    "squadra": "Inter U23",
-    "g": 12,
-    "v": 5,
-    "n": 2,
-    "p": 5,
-    "gf": 21,
-    "gs": 20,
-    "pt": 17
-   },
-   {
-    "pos": 10,
-    "squadra": "Casertana",
-    "g": 12,
-    "v": 4,
-    "n": 5,
-    "p": 3,
-    "gf": 16,
-    "gs": 15,
-    "pt": 17
-   },
-   {
     "pos": 11,
+    "squadra": "Giugliano",
+    "g": 13,
+    "v": 5,
+    "n": 1,
+    "p": 7,
+    "gf": 17,
+    "gs": 29,
+    "pt": 16
+   },
+   {
+    "pos": 12,
     "squadra": "Cavese",
     "g": 12,
     "v": 4,
@@ -444,18 +457,18 @@
     "pt": 15
    },
    {
-    "pos": 12,
+    "pos": 13,
     "squadra": "Salernitana",
-    "g": 12,
+    "g": 13,
     "v": 3,
     "n": 6,
-    "p": 3,
+    "p": 4,
     "gf": 15,
-    "gs": 16,
+    "gs": 17,
     "pt": 15
    },
    {
-    "pos": 13,
+    "pos": 14,
     "squadra": "Foggia",
     "g": 12,
     "v": 4,
@@ -466,18 +479,18 @@
     "pt": 15
    },
    {
-    "pos": 14,
+    "pos": 15,
     "squadra": "Casarano",
-    "g": 12,
+    "g": 13,
     "v": 4,
     "n": 3,
-    "p": 5,
+    "p": 6,
     "gf": 15,
-    "gs": 20,
+    "gs": 21,
     "pt": 15
    },
    {
-    "pos": 15,
+    "pos": 16,
     "squadra": "Altamura",
     "g": 12,
     "v": 4,
@@ -486,17 +499,6 @@
     "gf": 11,
     "gs": 17,
     "pt": 15
-   },
-   {
-    "pos": 16,
-    "squadra": "Giugliano",
-    "g": 12,
-    "v": 4,
-    "n": 1,
-    "p": 7,
-    "gf": 16,
-    "gs": 29,
-    "pt": 13
    },
    {
     "pos": 17,
@@ -512,34 +514,34 @@
    {
     "pos": 18,
     "squadra": "Savoia",
-    "g": 12,
+    "g": 13,
     "v": 2,
     "n": 6,
-    "p": 4,
-    "gf": 13,
-    "gs": 18,
+    "p": 5,
+    "gf": 14,
+    "gs": 21,
     "pt": 12
    },
    {
     "pos": 19,
     "squadra": "Cosenza",
-    "g": 12,
+    "g": 13,
     "v": 2,
-    "n": 3,
+    "n": 4,
     "p": 7,
     "gf": 10,
     "gs": 23,
-    "pt": 9
+    "pt": 10
    },
    {
     "pos": 20,
     "squadra": "Crotone",
-    "g": 12,
+    "g": 13,
     "v": 1,
     "n": 4,
-    "p": 7,
+    "p": 8,
     "gf": 12,
-    "gs": 20,
+    "gs": 21,
     "pt": 1,
     "nota": "6 punti di penalizzazione"
    }
