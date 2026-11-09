@@ -993,6 +993,25 @@ html[data-theme="light"] .lvchip{color:#fff}
 html[data-theme="light"] .mv.up{color:#0b8a4f} html[data-theme="light"] .mv.dn{color:#c0283f}
 html[data-theme="light"] .lvhead{background:linear-gradient(90deg,#dff6fa,#f2fbfd);border-color:rgba(8,145,178,.3)}
 html[data-theme="light"] .rk.z{background:color-mix(in srgb,var(--zc) 18%,#fff);color:color-mix(in srgb,var(--zc) 70%,#0b1430)}
+/* forma: in classifica solo la competizione, nella scheda squadra tutte */
+th small.fdl{display:block;font-size:9px;letter-spacing:.06em;color:var(--lvt,#2dd4e8);font-weight:800;margin-top:1px}
+.fall{margin-top:12px;padding:12px 12px 14px}
+.fall-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 4px 10px;flex-wrap:wrap}
+.fall-h b{font:800 15px var(--f-num);color:var(--fg)}
+.fall-h span{font-size:11.5px;color:var(--mute)}
+.fa-row{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.fa{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 3px 7px;border-radius:12px;cursor:pointer;min-width:0;
+  background:rgba(255,255,255,.05);border:1px solid var(--line2);border-top:3px solid var(--fc)}
+.fa.w{--fc:#2ee6a6} .fa.d{--fc:#9aa7c2} .fa.l{--fc:#ff5470}
+.fa-r{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:800 12px var(--f-num);color:#08111f;background:var(--fc)}
+.fa-s{font:800 14px var(--f-num);color:var(--fg)}
+.fa-o{font-size:10.5px;color:var(--fg2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fa-c{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:2px}
+.fa-c img{width:18px;height:18px;object-fit:contain}
+.fa-c em{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.02em}
+html[data-theme="light"] .fa{background:#fff;box-shadow:0 2px 8px rgba(30,50,110,.08)}
+html[data-theme="light"] .fa.w{--fc:#12a874} html[data-theme="light"] .fa.d{--fc:#8391ad} html[data-theme="light"] .fa.l{--fc:#e0435f}
+html[data-theme="light"] .fa-r{color:#fff}
 </style>
 </head>
 <body>
@@ -1930,7 +1949,7 @@ async function viewTab(){
         <td class="x frm" data-t="${esc(String(x.t.id))}"></td></tr>`;
     }).join("");
     return `<section>${groups.length > 1 ? band(Object.assign({}, L, { n:g.name })) : ""}
-      <div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Squadra</th><th>G</th><th class="x">V</th><th class="x">N</th><th class="x">P</th><th class="x">GF</th><th class="x">GS</th><th>DR</th><th>Pt</th><th class="x">Ultime 5</th></tr></thead>
+      <div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Squadra</th><th>G</th><th class="x">V</th><th class="x">N</th><th class="x">P</th><th class="x">GF</th><th class="x">GS</th><th>DR</th><th>Pt</th><th class="x">Ultime 5 <small class="fdl">${esc(L.sh || L.n)}</small></th></tr></thead>
       <tbody>${body}</tbody></table></div></section>`;
   }).join("");
   const legend = used.size ? `<div class="legend">${[...used].map(k => `<span><i style="background:${ZINFO[k][1]}"></i>${ZINFO[k][0]}</span>`).join("")}</div>` : "";
@@ -1982,16 +2001,27 @@ function liveTable(rows, live){
 }
 /* Forma recente: presa dalle partite più vicine a oggi (la fonte la fornisce partita per partita) */
 async function fillForm(slug){
+  /* Solo partite di QUESTA competizione: la forma in classifica non mescola campionato e coppe */
   try {
     const days = await leagueDays(slug), today = dayKey(new Date());
-    const pick = [...days.filter(k => k < today).slice(-4), ...days.filter(k => k >= today).slice(0, 3)];
-    const res = await Promise.all(pick.map(k => getJSON(`${API}/site/v2/sports/soccer/${slug}/scoreboard?dates=${k}`, k < today ? 86400 : 900).then(r => r.data.events || []).catch(() => [])));
-    const form = {};
-    for (const evs of res) for (const e of evs){ const m = norm(e, slug); [m.home, m.away].forEach(t => { if (t.form) form[t.id] = t.form; }); }
+    const past = days.filter(k => k <= today).reverse();
+    const ids = [...document.querySelectorAll("td.frm")].map(td => td.dataset.t);
+    const byTeam = {}; ids.forEach(id => byTeam[id] = []);
+    const seen = new Set();
+    for (let i = 0; i < past.length && i < 48; i += 8){
+      const res = await Promise.all(past.slice(i, i + 8).map(k => getJSON(`${API}/site/v2/sports/soccer/${slug}/scoreboard?dates=${k}`, k < today ? 86400 : 300).then(r => r.data.events || []).catch(() => [])));
+      for (const evs of res) for (const e of evs){
+        if (seen.has(e.id)) continue; seen.add(e.id);
+        const m = norm(e, slug); if (m.state !== "post" || m.home.score == null || m.away.score == null || m.home.score === "") continue;
+        for (const t of [m.home, m.away]) if (byTeam[t.id]) byTeam[t.id].push(m);
+      }
+      if (ids.every(id => byTeam[id].length >= 5)) break;
+    }
     if (S.tab !== "tab") return;
     document.querySelectorAll("td.frm").forEach(td => {
-      const f = (form[td.dataset.t] || "").slice(-5).toUpperCase();
-      td.innerHTML = f ? `<span class="fd">${[...f].map(c => `<i class="${c === "W" ? "w" : c === "L" ? "l" : "d"}" title="${c === "W" ? "Vittoria" : c === "L" ? "Sconfitta" : "Pareggio"}"></i>`).join("")}</span>` : "–";
+      const ms = (byTeam[td.dataset.t] || []).sort((x, y) => x.date - y.date).slice(-5);
+      td.innerHTML = ms.length ? `<span class="fd">${ms.map(m => { const o = outcome(m, td.dataset.t), op = m.home.id === td.dataset.t ? m.away : m.home;
+        return `<i class="${o}" title="${o === "w" ? "Vittoria" : o === "l" ? "Sconfitta" : "Pareggio"} ${esc(m.home.score)}-${esc(m.away.score)} con ${esc(op.name)}"></i>`; }).join("")}</span>` : "–";
     });
   } catch {}
 }
@@ -2722,6 +2752,17 @@ function onePitchHtml(rr, t, slug){
   return `<div class="pitch one"><div class="ln half"></div><div class="ln box b"></div><div class="ln sbox b"></div><div class="ln cc one"></div>
     <div class="tl t">${crest(t.logo, t.name)}${esc(rr.formation || "")}</div>${html}</div>`;
 }
+/* Forma complessiva: ultime 5 partite in TUTTE le competizioni, ognuna col suo logo */
+function formAll(ms, f){
+  if (!ms.length) return "";
+  const t = ms.map(m => { const o = outcome(m, f.id), h = m.home.id === f.id, op = h ? m.away : m.home, lg = leagueLogo(m.slug), l = BY[m.slug] || { n:m.slug };
+    return `<div class="fa ${o}" data-ev="${esc(m.id)}" data-sl="${esc(m.slug)}" role="button">
+      <span class="fa-r">${o === "w" ? "V" : o === "l" ? "P" : "N"}</span>
+      <span class="fa-s">${esc(h ? m.home.score : m.away.score)}-${esc(h ? m.away.score : m.home.score)}</span>
+      <span class="fa-o">${h ? "" : "@ "}${esc(op.name)}</span>
+      <span class="fa-c">${lg ? `<img src="${esc(lg)}" alt="">` : ""}<em>${esc(l.sh || l.n)}</em></span></div>`; }).join("");
+  return `<div class="sheet fall"><div class="fall-h"><b>Forma attuale</b><span>Ultime 5 partite in tutte le competizioni</span></div><div class="fa-row">${t}</div></div>`;
+}
 const stillOn = (key, box, tab) => openTeamKey === key && box.isConnected && box.dataset.tab === tab;
 async function teamCal(f, key, box){
   box.innerHTML = `<div class="sheet"><div class="empty"><b>Carico la stagione…</b><span id="tprog">La prima volta richiede qualche secondo.</span></div></div>`;
@@ -2734,7 +2775,7 @@ async function teamCal(f, key, box){
   let html = `<div class="sheet recap">
       <div><b>${played.length}</b><span>Giocate</span></div><div class="w"><b>${oc.filter(x => x === "w").length}</b><span>Vinte</span></div>
       <div><b>${oc.filter(x => x === "d").length}</b><span>Pari</span></div><div class="l"><b>${oc.filter(x => x === "l").length}</b><span>Perse</span></div>
-      <div><b>${gf}–${ga}</b><span>Gol</span></div></div><div class="sheet" style="margin-top:12px">`;
+      <div><b>${gf}–${ga}</b><span>Gol</span></div></div>${formAll(played.slice(-5), f)}<div class="sheet" style="margin-top:12px">`;
   let mon = "";
   for (const m of all){
     const mm = fmt(m.date, { month:"long", year:"numeric" });
@@ -3544,7 +3585,7 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "3.5", APP_DATE = "7 novembre 2026";
+const APP_VER = "3.6", APP_DATE = "7 novembre 2026";
 const verFoot = () => `<p class="appver" data-diag>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
 /* tocco sulla versione: misure dello schermo, servono per capire lo spazio vuoto in basso */
 document.addEventListener("click", e => {
