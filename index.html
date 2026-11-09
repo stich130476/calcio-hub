@@ -1024,6 +1024,10 @@ html[data-theme="light"] .fa-r{color:#fff}
 @media (max-width:480px){ .tscr{grid-template-columns:24px minmax(0,1fr) 28px 28px 20px 20px 32px 28px;gap:4px;padding:8px 10px} .tscr > span{font-size:14px} .tscr .g{font-size:16px} .tscr .tscn .face{width:30px;height:30px} }
 html[data-theme="light"] .tscr .kyel{color:#b88a00} html[data-theme="light"] .tscr .kred{color:#d0213c} html[data-theme="light"] .tscr .pk i{color:#c0283f}
 html[data-theme="light"] .tscmore{color:#1d5fe0}
+.tscr.hd .srt{cursor:pointer;border-radius:8px;padding:3px 0;position:relative}
+.tscr.hd .srt.on{color:var(--fg);background:rgba(111,176,255,.16)}
+.tscr.hd .srt.on::after{content:"▼";display:block;font-size:7px;line-height:1;margin-top:1px;color:#6fb0ff}
+html[data-theme="light"] .tscr.hd .srt.on{background:#e3ecff} html[data-theme="light"] .tscr.hd .srt.on::after{color:#1d5fe0}
 </style>
 </head>
 <body>
@@ -2619,6 +2623,7 @@ async function openTeam(f, tab){
     if (e.target.closest("[data-favtog]")){ toggleFav(f); const hd = body.querySelector(".th"); if (hd) hd.outerHTML = teamHead(f); return; }
     const tt = e.target.closest("[data-tt]"); if (tt){ show(tt.dataset.tt); return; }
     const tm = e.target.closest("[data-tscmore]"); if (tm){ tm.closest(".tsc").classList.add("open"); return; }
+    const so = e.target.closest("[data-srt]"); if (so){ sortScorers(so); return; }
     const at = e.target.closest("[data-ath]");
     if (at){ const p = (box._roster || []).find(x => x.id === at.dataset.ath); if (p) openPlayer(p); return; }
     const cp = e.target.closest("[data-comp]");
@@ -2950,17 +2955,29 @@ async function teamScorers(f, list){
   const all = res.filter(x => x.g || x.a || x.yc || x.rc || x.pg || x.pmiss).sort((a,b) => b.g - a.g || b.a - a.a || b.yc + b.rc * 2 - a.yc - a.rc * 2 || a.pres - b.pres);
   if (!all.length) return "";
   const hasPen = all.some(x => x.pg != null);
-  const row = (x, i) => `<div class="tscr${i >= 8 ? " more" : ""}" data-ath="${esc(x.p.id)}" role="button"><span class="n${i < 3 && x.g ? " g" + (i + 1) : ""}">${i + 1}</span>
+  const row = (x, i) => `<div class="tscr${i >= 8 ? " more" : ""}" data-ath="${esc(x.p.id)}" data-s="${[x.g, x.a, x.yc, x.rc, x.pg || 0, x.pres, i].join(",")}" role="button"><span class="n${i < 3 && x.g ? " g" + (i + 1) : ""}">${i + 1}</span>
       <span class="tscn"><span class="face"${faceData(x.p, f.name, x.p.age)}>${autoFace(x.p)}</span><b>${esc(x.p.name)}</b></span>
       <span class="g">${x.g}</span><span>${x.a}</span>
       <span class="${x.yc ? "kyel" : "z"}">${x.yc}</span><span class="${x.rc ? "kred" : "z"}">${x.rc}</span>
       <span class="pk">${!hasPen || x.pg == null ? "–" : (x.pg || x.pmiss) ? `<b>${x.pg}</b><i>${x.pmiss ? "/" + (x.pg + x.pmiss) : ""}</i>` : "<span class=z>0</span>"}</span>
       <span class="tp">${x.pres}</span></div>`;
   return `<div class="seclbl" style="margin:4px 4px 8px">Gol, assist, cartellini e rigori in ${esc(L.n || "campionato")}</div><div class="sheet tsc" id="tscsheet">
-    <div class="tscr hd"><span></span><span></span><span>Gol</span><span>Ass</span><span title="Ammonizioni"><i class="crd y"></i></span><span title="Espulsioni"><i class="crd r"></i></span><span>Rig</span><span>Pres</span></div>
+    <div class="tscr hd"><span></span><span></span><span class="srt on" data-srt="0">Gol</span><span class="srt" data-srt="1">Ass</span><span class="srt" data-srt="2" title="Ammonizioni"><i class="crd y"></i></span><span class="srt" data-srt="3" title="Espulsioni"><i class="crd r"></i></span><span class="srt" data-srt="4">Rig</span><span class="srt" data-srt="5">Pres</span></div>
     ${all.map(row).join("")}
     ${all.length > 8 ? `<button class="tscmore" data-tscmore>Mostra tutti (${all.length})</button>` : ""}</div>
-    <p class="note tscleg"><i class="crd y"></i> ammonizioni · <i class="crd r"></i> espulsioni · <b>Rig</b>: rigori segnati${hasPen ? ", e dopo la barra quelli calciati (es. 2/3 = uno sbagliato)" : ""}</p>`;
+    <p class="note tscleg">Tocca un'intestazione per ordinare. <i class="crd y"></i> ammonizioni · <i class="crd r"></i> espulsioni · <b>Rig</b>: rigori segnati${hasPen ? ", e dopo la barra quelli calciati (es. 2/3 = uno sbagliato)" : ""}</p>`;
+}
+/* ordina la tabella gol/assist/cartellini toccando l'intestazione (dal più alto al più basso) */
+function sortScorers(h){
+  const sh = h.closest(".tsc"), k = +h.dataset.srt, rows = [...sh.querySelectorAll(".tscr[data-s]")];
+  const v = r => r.dataset.s.split(",").map(Number);
+  rows.sort((a, b) => { const x = v(a), y = v(b); return y[k] - x[k] || y[0] - x[0] || y[1] - x[1] || x[6] - y[6]; });
+  const btn = sh.querySelector(".tscmore");
+  rows.forEach((r, i) => {
+    const n = r.querySelector(".n"); n.textContent = i + 1; n.className = "n" + (i < 3 && v(r)[k] ? " g" + (i + 1) : "");
+    r.classList.toggle("more", i >= 8); btn ? sh.insertBefore(r, btn) : sh.appendChild(r);
+  });
+  sh.querySelectorAll("[data-srt]").forEach(x => x.classList.toggle("on", x === h));
 }
 /* Ultime 5 partite giocate: dalle partite della sua squadra (formazioni e marcatori ESPN) */
 async function playerLast(p){
@@ -3617,7 +3634,7 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "3.9", APP_DATE = "7 novembre 2026";
+const APP_VER = "4.0", APP_DATE = "7 novembre 2026";
 const verFoot = () => `<p class="appver" data-diag>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
 /* tocco sulla versione: misure dello schermo, servono per capire lo spazio vuoto in basso */
 document.addEventListener("click", e => {
