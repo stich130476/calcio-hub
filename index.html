@@ -925,7 +925,18 @@ html[data-theme="light"] .aoc{background:linear-gradient(135deg,#f3ecff,#e9f0ff)
 html[data-theme="light"] .aoc-i{background:#e4d8ff;color:#6b3fd6}
 html[data-theme="light"] .aoc-t span{color:#6b3fd6}
 html[data-theme="light"] .aoc-x{background:rgba(20,35,80,.06);color:#4a5b80}
-.appver{text-align:center;font-size:12px;color:var(--mute);margin:26px 0 8px;letter-spacing:.02em}
+.appver{display:block;margin:26px auto 8px;text-align:center;font:500 12px inherit;color:var(--mute);letter-spacing:.02em;background:none;border:0;cursor:pointer}
+.appver span{display:block;margin-top:5px;font-weight:700;color:#6fb0ff}
+html[data-theme="light"] .appver span{color:#1d5fe0}
+.nv-h{margin:4px 4px 14px} .nv-h b{display:block;font:800 24px var(--f-num);color:var(--fg)} .nv-h span{font-size:13px;color:var(--mute)}
+.nv{display:flex;gap:14px;padding:12px 4px;border-top:1px solid var(--line)}
+.nv-v{flex:none;width:52px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.nv-v b{display:grid;place-items:center;width:50px;height:30px;border-radius:9px;font:800 15px var(--f-num);color:var(--fg);background:rgba(255,255,255,.07);border:1px solid var(--line2)}
+.nv.cur .nv-v b{background:linear-gradient(180deg,#3d8bff,#2259e6);color:#fff;border-color:transparent}
+.nv-v em{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#6fb0ff}
+.nv-b{flex:1;min-width:0} .nv-d{font-size:12px;color:var(--mute)}
+.nv-b ul{margin:4px 0 0;padding-left:18px} .nv-b li{font-size:14px;line-height:1.4;color:var(--fg2);margin:3px 0}
+html[data-theme="light"] .nv-v b{background:#fff;box-shadow:0 1px 4px rgba(30,50,110,.1)} html[data-theme="light"] .nv-v em{color:#1d5fe0}
 html[data-theme="light"] .yc:not(.now):not(.ico){background:#f1eaff;color:#5b34c4;border-color:rgba(124,77,255,.28)}
 html[data-theme="light"] img.wlimg{filter:drop-shadow(0 0 1px rgba(16,27,54,.85)) drop-shadow(0 0 1px rgba(16,27,54,.5)) !important}
 html[data-theme="light"] .wlbg{background:radial-gradient(circle at 50% 35%,#2b3d6e,#121c3c 75%) !important;border-color:rgba(20,35,80,.25) !important}
@@ -3634,16 +3645,34 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "4.0", APP_DATE = "7 novembre 2026";
-const verFoot = () => `<p class="appver" data-diag>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
-/* tocco sulla versione: misure dello schermo, servono per capire lo spazio vuoto in basso */
-document.addEventListener("click", e => {
-  const v = e.target.closest("[data-diag]"); if (!v) return;
-  const pr = document.createElement("div"); pr.style.cssText = "position:fixed;bottom:0;padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden";
-  document.body.appendChild(pr); const sab = pr.offsetHeight; pr.remove();
-  const tb = document.querySelector(".tabs"), tr = tb ? tb.getBoundingClientRect() : null;
-  v.textContent = `Misure: pagina ${innerWidth}×${innerHeight} · schermo ${screen.width}×${screen.height} · margine basso ${sab} · barra ${tr ? Math.round(tr.top) + "-" + Math.round(tr.bottom) : "-"} · ${document.documentElement.classList.contains("nob") ? "nob" : "std"} · v${APP_VER}`;
-});
+const APP_VER = "4.1", APP_DATE = "9 novembre 2026";
+const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
+/* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
+const NOVITA = [
+  ["4.1", "9 novembre 2026", ["Questo diario delle novità: si apre toccando la versione in fondo alla pagina Storia."]],
+  ["4.0", "9 novembre 2026", ["Nella Rosa la tabella si ordina toccando le intestazioni: gol, assist, gialli, rossi, rigori o presenze."]],
+  ["3.9", "9 novembre 2026", ["Nella Rosa compaiono anche ammonizioni, espulsioni e rigori segnati o sbagliati.", "Pulsante \"Mostra tutti\" per vedere l'intera rosa."]],
+  ["3.8", "9 novembre 2026", ["Nations League: gironi in ordine di nome, apertura diretta sul girone dell'Italia, riga dell'Italia evidenziata."]],
+  ["3.7", "9 novembre 2026", ["Aggiunta la classifica della Nations League."]],
+  ["3.6", "9 novembre 2026", ["In classifica la forma (ultime 5) conta solo le partite di quella competizione.", "Nella scheda squadra nuovo riquadro \"Forma attuale\": ultime 5 partite in tutte le competizioni, col logo di ognuna."]],
+  ["3.5", "9 novembre 2026", ["Classifica live: durante le partite punti e posizioni cambiano in tempo reale, con le squadre in campo in colore acqua e le frecce di posizione.", "Numeri delle zone europee più leggibili nel tema giorno."]],
+  ["3.4", "8 novembre 2026", ["Stadio trovato anche quando ESPN e Wikipedia lo chiamano in modo diverso (es. Olimpico)."]],
+  ["3.3", "7 novembre 2026", ["\"Per orario\" a schede: una per giorno con il piccolo calendario, oggi in blu.", "Nomi lunghi su due righe invece di \"S…\"; nomi delle competizioni più corti.", "Corrette le scritte troppo chiare nel tema giorno."]],
+  ["3.2", "7 novembre 2026", ["Colore di fondo pieno sotto la pagina."]],
+  ["3.1", "7 novembre 2026", ["Strumento di misura dello schermo (poi sostituito da questo diario)."]],
+  ["3.0", "7 novembre 2026", ["Loghi delle competizioni più grandi dentro i cerchi."]],
+  ["2.9", "7 novembre 2026", ["Tolto lo spazio vuoto inutile sotto la barra in basso."]],
+  ["2.8", "7 novembre 2026", ["Loghi bianchi (Champions, Premier, Ligue 1…) visibili nel tema giorno su fondo colorato.", "Stadio giusto anche per le squadre con più stadi nella storia (es. San Siro)."]],
+  ["2.7", "7 novembre 2026", ["Tema giorno e notte: automatico come l'iPhone, oppure scelto col pulsante in alto.", "Ricerca rapida: cercati di recente e squadre più cercate.", "Scheda squadra: anno di fondazione della società e di inaugurazione dello stadio.", "Numero di versione in fondo alla pagina Storia."]],
+  ["2.6", "fino al 7 novembre 2026", ["Scheda squadra con stadio, capienza e collegamento a Wikipedia; prossimo avversario; gol evidenziati durante le partite; ultime 5 partite del giocatore; marcatori della squadra.", "Cronologia della partita, precedenti, andamento in classifica, rivali, big match, formazione tipo, \"Per orario\" in Le mie, classifica dentro la partita."]]
+];
+function openNovita(){
+  const b = makeSheet("ovN", 60, "Novità delle versioni");
+  b.innerHTML = `<div class="nv-h"><b>Novità</b><span>Cosa è cambiato a ogni aggiornamento</span></div>` + NOVITA.map(([v, d, it], i) => `
+    <div class="nv${i === 0 ? " cur" : ""}"><div class="nv-v"><b>${esc(v)}</b>${i === 0 ? "<em>attuale</em>" : ""}</div>
+      <div class="nv-b"><span class="nv-d">${esc(d)}</span><ul>${it.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></div>`).join("");
+}
+document.addEventListener("click", e => { if (e.target.closest("[data-novita]")) openNovita(); });
 function viewStoria(){
   if (S.hist === "rec") return viewRecord();
   if (S.hist === "ao") return viewAccadde();
