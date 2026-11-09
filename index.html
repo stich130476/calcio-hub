@@ -1923,8 +1923,8 @@ async function viewTab(){
   walk(r.data, L.n);
   if (L.s === "uefa.nations"){                 // gironi: prima quello dell'Italia, nomi in italiano
     groups.forEach(g => { g.name = String(g.name || "").replace(/^UEFA Nations League,?\s*/i, "").replace(/League ([A-D])/i, "Lega $1").replace(/Group/i, "Girone"); });
-    const ita = g => g.entries.some(e => /^Ital/i.test((e.team || {}).displayName || ""));
-    groups.sort((a, b) => ita(b) - ita(a));
+    groups.sort((a, b) => a.name.localeCompare(b.name, "it", { numeric:true }));        // in ordine di nome
+    groups.forEach(g => { g.ita = g.entries.some(e => /^Ital/i.test((e.team || {}).displayName || "")); });
   }
   if (!groups.length){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Classifica non ancora disponibile", "La fonte non pubblica ancora la tabella di " + esc(L.n) + ".")}</div>`; return; }
   const zones = groups.length === 1 ? (ZONES[L.s] || []) : [];
@@ -1941,7 +1941,7 @@ async function viewTab(){
       const pos = x.lv !== undefined || rows.some(y => y.lv) ? i + 1 : (x.st.rank || i + 1), z = zones.find(([a,b]) => pos >= a && pos <= b); if (z) used.add(z[2]);
       const logo = (x.t.logos && x.t.logos[0] && x.t.logos[0].href) || x.t.logo || "";
       const dr = x.st.pointDifferential ?? ((x.st.pointsFor ?? 0) - (x.st.pointsAgainst ?? 0));
-      const itr = L.euro && ITA_RE.test(x.t.displayName || "") ? " itr" : "";
+      const itr = (L.euro && ITA_RE.test(x.t.displayName || "")) || (L.s === "uefa.nations" && /^Ital/i.test(x.t.displayName || "")) ? " itr" : "";
       const lvc = x.lv ? " lvt" : "";
       const mv = x.mv ? `<i class="mv ${x.mv > 0 ? "up" : "dn"}">${x.mv > 0 ? "▲" : "▼"}${Math.abs(x.mv)}</i>` : "";
       const chip = x.lv ? `<em class="lvchip"><b>${esc(x.lv.gf)}-${esc(x.lv.ga)}</b>${x.lv.min ? " " + esc(x.lv.min) : ""}</em>` : "";
@@ -1953,7 +1953,7 @@ async function viewTab(){
         <td class="dr ${dr > 0 ? "p" : dr < 0 ? "n" : ""}">${dr > 0 ? "+" + dr : n(dr)}</td><td class="pts">${n(x.st.points)}</td>
         <td class="x frm" data-t="${esc(String(x.t.id))}"></td></tr>`;
     }).join("");
-    return `<section>${groups.length > 1 ? band(Object.assign({}, L, { n:g.name })) : ""}
+    return `<section${g.ita ? ' id="grita"' : ""}>${groups.length > 1 ? band(Object.assign({}, L, { n:g.name })) : ""}
       <div class="tbl-wrap"><table><thead><tr><th>#</th><th class="l">Squadra</th><th>G</th><th class="x">V</th><th class="x">N</th><th class="x">P</th><th class="x">GF</th><th class="x">GS</th><th>DR</th><th>Pt</th><th class="x">Ultime 5 <small class="fdl">${esc(L.sh || L.n)}</small></th></tr></thead>
       <tbody>${body}</tbody></table></div></section>`;
   }).join("");
@@ -1965,8 +1965,11 @@ async function viewTab(){
   const lvHead = anyLive ? `<div class="lvhead"><span class="lvdot"></span><div><b>Classifica live</b><span>Calcolata coi risultati delle partite in corso · diventa ufficiale a fine partita</span></div></div>` : "";
   $("#tbl").innerHTML = `${lvHead}<div class="sheet">${html}${legend}</div><p class="note">Ruota il telefono per vedere vittorie, pareggi, sconfitte, gol e forma recente.</p>`;
   fillForm(L.s);
+  const gi = document.getElementById("grita");               // si apre direttamente sul girone dell'Italia
+  if (gi && !viewTab.kept){ const mn = $("#main"); if (mn) mn.scrollTo({ top:Math.max(0, gi.getBoundingClientRect().top - mn.getBoundingClientRect().top + mn.scrollTop - 12) }); }
+  viewTab.kept = false;
   clearTimeout(refreshTimer);
-  if (anyLive) refreshTimer = setTimeout(() => { if (S.tab === "tab" && !openEv && (BY[S.league] || BY["ita.1"]) === L) viewTab(); }, 30000);
+  if (anyLive) refreshTimer = setTimeout(() => { if (S.tab === "tab" && !openEv && (BY[S.league] || BY["ita.1"]) === L){ const y = ($("#main") || {}).scrollTop; viewTab.kept = true; viewTab().then(() => { const mn = $("#main"); if (mn) mn.scrollTop = y; }); } }, 30000);
 }
 /* ---------- Classifica live: le partite in corso spostano punti, gol e posizioni ---------- */
 async function liveGames(slug){
@@ -3590,7 +3593,7 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "3.7", APP_DATE = "7 novembre 2026";
+const APP_VER = "3.8", APP_DATE = "7 novembre 2026";
 const verFoot = () => `<p class="appver" data-diag>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
 /* tocco sulla versione: misure dello schermo, servono per capire lo spazio vuoto in basso */
 document.addEventListener("click", e => {
