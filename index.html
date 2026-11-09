@@ -1142,7 +1142,7 @@ const LEAGUES = [
   { s:"sco.1", sh:"Scozia", n:"Premiership scozzese", c:"#6d5cff" },
   { s:"ita.2", n:"Serie B", c:"#00b3a4" },
   { s:"ita.3", n:"Serie C", c:"#1b8fe0" },
-  { s:"uefa.nations", sh:"Nations League", n:"Nations League", c:"#2f5bff", cup:true },
+  { s:"uefa.nations", sh:"Nations League", n:"Nations League", c:"#2f5bff", cup:true, tbl:true },
   { s:"eng.fa", n:"FA Cup", c:"#d0021b", cup:true, dom:true },
   { s:"eng.league_cup", n:"Carabao Cup", c:"#00a651", cup:true, dom:true },
   { s:"eng.charity", n:"Community Shield", c:"#7a3cff", cup:true, dom:true, b:"SHIELD", tro:true },
@@ -1912,7 +1912,7 @@ function card(m, f){
 async function viewTab(){
   const L = BY[S.league] || BY["ita.1"];
   $("#view").innerHTML = header(esc(L.n), L) + `<div id="tbl">${skel(6)}</div>`;
-  if (L.cup){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Nessuna classifica", esc(L.n) + " si gioca a eliminazione diretta o senza una tabella unica.")}</div>`; stamp(); return; }
+  if (L.cup && !L.tbl){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Nessuna classifica", esc(L.n) + " si gioca a eliminazione diretta o senza una tabella unica.")}</div>`; stamp(); return; }
   let r;
   try { r = L.s === "ita.3" ? await u23Table() : await getJSON(`${API}/v2/sports/soccer/${L.s}/standings`, 900); }
   catch { if (S.tab === "tab"){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Classifica non raggiungibile", "Controlla la connessione e riprova.", true)}</div>`; stamp(); } return; }
@@ -1921,6 +1921,11 @@ async function viewTab(){
   const groups = [];
   const walk = (o, name) => { if (!o) return; if (o.standings && o.standings.entries && o.standings.entries.length) groups.push({ name:o.name || name, entries:o.standings.entries }); (o.children || []).forEach(c => walk(c, c.name)); };
   walk(r.data, L.n);
+  if (L.s === "uefa.nations"){                 // gironi: prima quello dell'Italia, nomi in italiano
+    groups.forEach(g => { g.name = String(g.name || "").replace(/^UEFA Nations League,?\s*/i, "").replace(/League ([A-D])/i, "Lega $1").replace(/Group/i, "Girone"); });
+    const ita = g => g.entries.some(e => /^Ital/i.test((e.team || {}).displayName || ""));
+    groups.sort((a, b) => ita(b) - ita(a));
+  }
   if (!groups.length){ $("#tbl").innerHTML = `<div class="sheet">${emptyBox("Classifica non ancora disponibile", "La fonte non pubblica ancora la tabella di " + esc(L.n) + ".")}</div>`; return; }
   const zones = groups.length === 1 ? (ZONES[L.s] || []) : [];
   const favIds = new Set(FAVS.map(f => f.id).filter(Boolean).concat("u23")), used = new Set();
@@ -2601,7 +2606,7 @@ async function openTeam(f, tab){
     const at = e.target.closest("[data-ath]");
     if (at){ const p = (box._roster || []).find(x => x.id === at.dataset.ath); if (p) openPlayer(p); return; }
     const cp = e.target.closest("[data-comp]");
-    if (cp){ const s = cp.dataset.comp; removeSheet("ovT"); S.league = s; S.tab = (BY[s] || {}).cup ? "oggi" : "tab"; save(); renderRail(); renderTabs(); render(); $("#main").scrollTo({ top:0 }); }
+    if (cp){ const s = cp.dataset.comp; removeSheet("ovT"); S.league = s; S.tab = (BY[s] || {}).cup && !(BY[s] || {}).tbl ? "oggi" : "tab"; save(); renderRail(); renderTabs(); render(); $("#main").scrollTo({ top:0 }); }
   });
   show(tab || "cal");
   teamInfo(f).then(v => { const el = body.querySelector(`.tinfo[data-ti="${CSS.escape(String(f.id || ""))}"]`); if (el && v) el.innerHTML = teamInfoHtml(v); });
@@ -3585,7 +3590,7 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "3.6", APP_DATE = "7 novembre 2026";
+const APP_VER = "3.7", APP_DATE = "7 novembre 2026";
 const verFoot = () => `<p class="appver" data-diag>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}</p>`;
 /* tocco sulla versione: misure dello schermo, servono per capire lo spazio vuoto in basso */
 document.addEventListener("click", e => {
