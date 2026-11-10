@@ -1167,6 +1167,7 @@ const LEAGUES = [
   { s:"ned.1", n:"Eredivisie", c:"#ff6a1a" },
   { s:"bel.1", sh:"Belgio", n:"Jupiler Pro League", c:"#f0b400" },
   { s:"sco.1", sh:"Scozia", n:"Premiership scozzese", c:"#6d5cff" },
+  { s:"nor.1", sh:"Norvegia", n:"Eliteserien norvegese", c:"#d6283a" },
   { s:"ita.2", n:"Serie B", c:"#00b3a4" },
   { s:"ita.3", n:"Serie C", c:"#1b8fe0" },
   { s:"uefa.nations", sh:"Nations League", n:"Nations League", c:"#2f5bff", cup:true, tbl:true },
@@ -1193,6 +1194,7 @@ const ZONES = {
   "ger.1": [[1,4,"cl"],[5,5,"el"],[6,6,"conf"],[16,16,"pout"],[17,18,"rel"]],
   "fra.1": [[1,3,"cl"],[4,4,"clq"],[5,5,"el"],[6,6,"conf"],[16,16,"pout"],[17,18,"rel"]],
   "ned.1": [[1,2,"cl"],[3,3,"clq"],[16,16,"pout"],[17,18,"rel"]],
+  "nor.1": [[1,1,"clq"],[14,14,"pout"],[15,16,"rel"]],
   "ita.2": [[1,2,"promo"],[3,8,"po"],[16,17,"pout"],[18,20,"rel"]],
   "ita.3": [[1,1,"promo"],[2,10,"po"],[16,19,"pout"],[20,20,"rel"]],
   "uefa.champions": [[1,8,"r16"],[9,24,"kpo"],[25,36,"out"]],
@@ -2512,7 +2514,7 @@ function teamInfoBox(f){
    la voce deve essere una squadra di calcio della nazione giusta, e la capienza si mostra solo se lo stadio
    di Wikidata è lo stesso indicato da ESPN. Se qualcosa non torna, quel dato non compare. */
 const TINFO = new Map(Object.entries(store.get("tinfo7") || {}));
-const LEAGUE_COUNTRY = { ita:["Q38"], eng:["Q145","Q21"], sco:["Q145","Q22"], esp:["Q29"], ger:["Q183"], fra:["Q142"], ned:["Q55"], por:["Q45"], bel:["Q31"], tur:["Q43"], aut:["Q40"], sui:["Q39"] };
+const LEAGUE_COUNTRY = { ita:["Q38"], eng:["Q145","Q21"], sco:["Q145","Q22"], esp:["Q29"], ger:["Q183"], fra:["Q142"], ned:["Q55"], por:["Q45"], bel:["Q31"], nor:["Q20"], tur:["Q43"], aut:["Q40"], sui:["Q39"] };
 function teamInfoHtml(v){
   if (!v) return "";
   const parts = [];
@@ -3280,7 +3282,7 @@ async function teamsIndex(){
   return list;
 }
 /* Elenco giocatori: dalle rose delle squadre dei campionati principali (costruito una volta a settimana) */
-const ROSTER_LEAGUES = ["ita.1","eng.1","esp.1","ger.1","fra.1","ita.2","sco.1","ned.1","bel.1","uefa.champions","uefa.europa","uefa.europa.conf"];
+const ROSTER_LEAGUES = ["ita.1","eng.1","esp.1","ger.1","fra.1","ita.2","sco.1","nor.1","ned.1","bel.1","uefa.champions","uefa.europa","uefa.europa.conf"];
 let pidxBuilding = null, pidxProg = null;
 function playersIndex(onProg){
   if (playersIdx) return Promise.resolve(playersIdx);
@@ -3645,10 +3647,11 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "4.1", APP_DATE = "9 novembre 2026";
+const APP_VER = "4.2", APP_DATE = "10 novembre 2026";
 const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
 /* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
 const NOVITA = [
+  ["4.2", "10 novembre 2026", ["Aggiunto il campionato norvegese (Eliteserien), sotto la Premiership scozzese: partite, risultati live, classifica e squadre."]],
   ["4.1", "9 novembre 2026", ["Questo diario delle novità: si apre toccando la versione in fondo alla pagina Storia."]],
   ["4.0", "9 novembre 2026", ["Nella Rosa la tabella si ordina toccando le intestazioni: gol, assist, gialli, rossi, rigori o presenze."]],
   ["3.9", "9 novembre 2026", ["Nella Rosa compaiono anche ammonizioni, espulsioni e rigori segnati o sbagliati.", "Pulsante \"Mostra tutti\" per vedere l'intera rosa."]],
