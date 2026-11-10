@@ -1503,7 +1503,8 @@ const skel = n => `<div class="sheet">${'<div class="skel"></div>'.repeat(n)}</d
 /* ---------- Loghi competizioni (aggiornati ogni settimana) ---------- */
 async function ensureLogos(){
   const saved = store.get("logos") || {}, tries = store.get("logoTry") || {};
-  if (store.get("logosV") === 3 && Date.now() - (store.get("logosT") || 0) < 7 * 864e5) return;
+  const missing = LEAGUES.some(l => !saved[l.s] && !tries[l.s]);      // competizione nuova: carica subito il suo logo
+  if (!missing && store.get("logosV") === 3 && Date.now() - (store.get("logosT") || 0) < 7 * 864e5) return;
   await Promise.all(LEAGUES.map(async l => {
     try {
       const { data } = await getJSON(`${API}/site/v2/sports/soccer/${l.s}/scoreboard`, 3600);
@@ -3647,10 +3648,11 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "4.2", APP_DATE = "10 novembre 2026";
+const APP_VER = "4.3", APP_DATE = "10 novembre 2026";
 const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
 /* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
 const NOVITA = [
+  ["4.3", "10 novembre 2026", ["Il logo di una competizione appena aggiunta (come la Norvegia) compare subito, senza aspettare l'aggiornamento settimanale dei loghi."]],
   ["4.2", "10 novembre 2026", ["Aggiunto il campionato norvegese (Eliteserien), sotto la Premiership scozzese: partite, risultati live, classifica e squadre."]],
   ["4.1", "9 novembre 2026", ["Questo diario delle novità: si apre toccando la versione in fondo alla pagina Storia."]],
   ["4.0", "9 novembre 2026", ["Nella Rosa la tabella si ordina toccando le intestazioni: gol, assist, gialli, rossi, rigori o presenze."]],
