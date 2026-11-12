@@ -1039,6 +1039,8 @@ html[data-theme="light"] .tscmore{color:#1d5fe0}
 .tscr.hd .srt.on{color:var(--fg);background:rgba(111,176,255,.16)}
 .tscr.hd .srt.on::after{content:"▼";display:block;font-size:7px;line-height:1;margin-top:1px;color:#6fb0ff}
 html[data-theme="light"] .tscr.hd .srt.on{background:#e3ecff} html[data-theme="light"] .tscr.hd .srt.on::after{color:#1d5fe0}
+.lvdot.sm{display:inline-block;width:8px;height:8px;margin:0 7px 1px 0;vertical-align:middle}
+.rkchip.lvk{box-shadow:inset 0 0 0 1.5px var(--lvt)} .rkchip.lvk b{color:var(--lvt)}
 </style>
 </head>
 <body>
@@ -2157,7 +2159,7 @@ function rkChip(tid, slug){
   const map = rkData(slug), st = map && map.get(String(tid));
   if (!st || !st.rank) return "";
   const open = rkIsOpen();
-  return `<button class="rkchip press" type="button" data-rkc aria-expanded="${open}"><i style="background:${rkZone(slug, st.rank)}"></i><b>${st.rank}°</b><span>· ${st.points ?? "–"} pt</span></button>`;
+  return `<button class="rkchip press${st.lv ? " lvk" : ""}" type="button" data-rkc aria-expanded="${open}"><i style="background:${rkZone(slug, st.rank)}"></i><b>${st.rank}°</b><span>· ${st.points ?? "–"} pt</span></button>`;
 }
 function rkBox(m, slug){
   const map = rkData(slug); if (!map || !rkIsOpen()) return "";
@@ -2167,7 +2169,8 @@ function rkBox(m, slug){
   const L = BY[slug] || {}, n = v => v == null || isNaN(v) ? "–" : v;
   const dr = st => st.pointDifferential ?? ((st.pointsFor ?? 0) - (st.pointsAgainst ?? 0));
   const gap = Math.abs((rows[0].st.points || 0) - (rows[1].st.points || 0));
-  return `<div class="blk"><h3>Classifica · ${esc(L.n || "")}</h3><div class="sheet rkt">
+  const ro = RK.get(slug) || {};
+  return `<div class="blk"><h3>${ro.live ? '<span class="lvdot sm"></span>Classifica live' : "Classifica"} · ${esc(ro.gname || L.n || "")}</h3><div class="sheet rkt">
     <div class="rkr hd"><span></span><span></span><span>Pt</span><span>G</span><span>DR</span></div>
     ${rows.map(({ t, st }) => { const d = dr(st); return `<div class="rkr"><span class="rkp" style="--zc:${rkZone(slug, st.rank)}">${st.rank}</span><span class="rkn">${crest(t.logo, t.name)}<b>${esc(t.name)}</b></span><span class="pt">${n(st.points)}</span><span>${n(st.gamesPlayed)}</span><span class="${d > 0 ? "p" : d < 0 ? "n" : ""}">${d > 0 ? "+" + d : n(d)}</span></div>`; }).join("")}
     <div class="rkgap">${gap ? `${gap} ${gap === 1 ? "punto" : "punti"} di distacco` : "Stessi punti in classifica"}</div></div></div>`;
@@ -2177,7 +2180,7 @@ function rkFull(m, slug, map){
   const dr = st => st.pointDifferential ?? ((st.pointsFor ?? 0) - (st.pointsAgainst ?? 0));
   const mine = new Set([String(m.home.id), String(m.away.id)]);
   const rows = [...map.entries()].filter(([, st]) => st.rank).sort((a,b) => a[1].rank - b[1].rank);
-  return `<div class="blk"><h3>Classifica completa · ${esc(L.n || "")}</h3><div class="sheet rkt rkfull">
+  return `<div class="blk"><h3>${o.live ? '<span class="lvdot sm"></span>Classifica live' : "Classifica completa"} · ${esc(o.gname || L.n || "")}</h3><div class="sheet rkt rkfull">
     <div class="rkr hd"><span></span><span></span><span>Pt</span><span>G</span><span>DR</span></div>
     ${rows.map(([id, st]) => { const t = teams.get(id) || {}, d = dr(st), me = mine.has(id);
       return `<div class="rkr${me ? " me" : ""}"><span class="rkp" style="--zc:${rkZone(slug, st.rank)}">${st.rank}</span><span class="rkn">${crest(t.logo || "", t.name || "")}<b>${esc(t.name || "")}</b></span><span class="pt">${n(st.points)}</span><span>${n(st.gamesPlayed)}</span><span class="${d > 0 ? "p" : d < 0 ? "n" : ""}">${d > 0 ? "+" + d : n(d)}</span></div>`; }).join("")}
@@ -2185,17 +2188,22 @@ function rkFull(m, slug, map){
 }
 async function rkFill(m, slug, ev){
   const L = BY[slug];
-  if (!L || L.cup || L.euro || slug === "ita.3") return;
-  if (!rkData(slug)){
-    const map = await officialTable(slug); if (!map) return;
-    const teams = new Map();
-    try { const { data } = await getJSON(`${API}/v2/sports/soccer/${slug}/standings`, 900);
-      const walk = o => { if (!o) return; ((o.standings || {}).entries || []).forEach(e => { const t = e.team || {}; teams.set(String(t.id), { name:t.shortDisplayName || t.displayName || "", logo:(t.logos && t.logos[0] && t.logos[0].href) || t.logo || "" }); }); (o.children || []).forEach(walk); };
-      walk(data); } catch {}
-    RK.set(slug, { t:Date.now(), map, teams });
+  if (!L || (L.cup && !L.tbl) || L.euro || slug === "ita.3") return;
+  let o = RK.get(slug);
+  if (!o || Date.now() - o.t > 15 * 60e3 || !o.base.has(String(m.home.id))){
+    const r = await tableFor(slug, m.home.id); if (!r || !r.map.has(String(m.away.id))) return;
+    o = { t:Date.now(), base:r.map, map:r.map, teams:r.teams, gname:r.gname }; RK.set(slug, o);
+  }
+  /* classifica live: le partite in corso spostano punti e posizioni anche qui */
+  o.map = o.base; o.live = false;
+  const live = await liveGames(slug).catch(() => []);
+  if (live.length){
+    const rows = [...o.base.entries()].map(([id, st]) => ({ t:{ id }, st })).sort((a, b) => (a.st.rank || 99) - (b.st.rank || 99));
+    const lr = liveTable(rows, live);
+    if (lr.some(x => x.lv)){ o.live = true; o.map = new Map(lr.map((x, i) => [String(x.t.id), Object.assign({}, x.st, { rank:i + 1, lv:!!x.lv, mv:x.mv || 0 })])); }
   }
   if (openEv !== ev) return;
-  document.querySelectorAll("#ovB .rkslot").forEach(sl => { if (!sl.firstChild) sl.innerHTML = rkChip(sl.dataset.t, slug); });
+  document.querySelectorAll("#ovB .rkslot").forEach(sl => { sl.innerHTML = rkChip(sl.dataset.t, slug); });
   const bx = document.getElementById("rkbox"); if (bx) bx.innerHTML = rkBox(m, slug);
 }
 document.addEventListener("click", e => {
@@ -2246,8 +2254,9 @@ function h2hHtml(list, m){
 async function h2hFromSchedules(m){
   const k = m.home.id + "-" + m.away.id;
   const L = BY[m.slug] || {};
-  const slugs = [...new Set([L.euro || L.cup ? null : m.slug, ...(L.euro ? [m.slug] : [])].filter(Boolean))];
-  const y0 = new Date().getMonth() >= 6 ? new Date().getFullYear() : new Date().getFullYear() - 1;
+  const nat = INTL.includes(m.slug);
+  const slugs = nat ? INTL : [...new Set([L.euro || L.cup ? null : m.slug, ...(L.euro ? [m.slug] : [])].filter(Boolean))];
+  const y0 = nat ? new Date().getFullYear() : new Date().getMonth() >= 6 ? new Date().getFullYear() : new Date().getFullYear() - 1;
   const out = new Map();
   await Promise.all(slugs.flatMap(sl => [0, 1, 2, 3, 4].map(async back => {
     const y = y0 - back;
@@ -2258,11 +2267,46 @@ async function h2hFromSchedules(m){
         if (g.state !== "post" || String(g.id) === String(m.id)) continue;
         const ids = [g.home.id, g.away.id];
         if (!ids.includes(m.home.id) || !ids.includes(m.away.id)) continue;
-        out.set(g.id, { id:g.id, gameDate:g.date.toISOString(), homeTeamId:g.home.id, awayTeamId:g.away.id, homeTeamScore:g.home.score, awayTeamScore:g.away.score, leagueName:(BY[sl] || {}).n || "" });
+        out.set(g.id, { id:g.id, gameDate:g.date.toISOString(), homeTeamId:g.home.id, awayTeamId:g.away.id, homeTeamScore:g.home.score, awayTeamScore:g.away.score, leagueName:(BY[sl] || {}).n || INTL_N[sl] || "" });
       }
     } catch {}
   })));
   H2H.set(k, [...out.values()]);
+}
+/* ---------- Nazionali: competizioni da cui prendere forma e precedenti ---------- */
+const INTL = ["uefa.nations","fifa.friendly","fifa.worldq.uefa","uefa.euroq","uefa.euro","fifa.world"];
+const INTL_N = { "fifa.friendly":"Amichevole", "fifa.worldq.uefa":"Qualificazioni Mondiali", "uefa.euroq":"Qualificazioni Europei", "uefa.euro":"Europei", "fifa.world":"Mondiali" };
+async function natRecent(tid){
+  const Y = new Date().getFullYear(), out = new Map();
+  await Promise.all(INTL.flatMap(sl => [Y, Y - 1].map(async y => {
+    try { const r = await getJSON(`${API}/site/v2/sports/soccer/${sl}/teams/${tid}/schedule?season=${y}`, y < Y ? 7 * 86400 : 3600, true);
+      for (const e of (r.data.events || [])){ const g = norm(e, sl); if (g.state === "post" && g.home.score != null && g.home.score !== "") out.set(g.id, g); } } catch {}
+  })));
+  return [...out.values()].sort((a, b) => b.date - a.date).slice(0, 5);
+}
+async function fillNatForm(m, ev){
+  const box = document.getElementById("natform"); if (!box) return;
+  const [a, b] = await Promise.all([natRecent(m.home.id), natRecent(m.away.id)]);
+  if (openEv !== ev || (!a.length && !b.length)) return;
+  const chips = (ms, tid) => ms.map(g => { const r = outcome(g, tid), op = g.home.id === tid ? g.away : g.home;
+    return `<span class="fchip ${r}" title="${esc(op.name)} ${esc(g.home.score)}-${esc(g.away.score)} · ${esc((BY[g.slug] || {}).n || INTL_N[g.slug] || "")}"><b>${r === "w" ? "V" : r === "l" ? "P" : "N"}</b>${op.logo ? `<img src="${esc(op.logo)}" alt="" loading="lazy">` : ""}<small>${esc(g.home.score)}-${esc(g.away.score)}</small></span>`; }).join("");
+  const row = (t, ms) => ms.length ? `<div class="frow"><span class="spot">${crest(t.logo, t.name)}</span><div class="fch">${chips(ms, t.id)}</div></div>` : "";
+  const d = document.getElementById("natform"); if (d) d.innerHTML = `<div class="blk"><h3>Forma recente · ultime 5 (tutte le partite)</h3><div class="sheet">${row(m.home, a)}${row(m.away, b)}</div></div>`;
+}
+/* Classifica del girone (o della lega unica) in cui gioca una squadra */
+async function tableFor(slug, tid){
+  try {
+    const { data } = await getJSON(`${API}/v2/sports/soccer/${slug}/standings`, 900);
+    const groups = []; const walk = o => { if (!o) return; if (o.standings && (o.standings.entries || []).length) groups.push({ name:o.name || "", entries:o.standings.entries }); (o.children || []).forEach(walk); };
+    walk(data);
+    const g = groups.length === 1 ? groups[0] : groups.find(x => x.entries.some(e => String((e.team || {}).id) === String(tid)));
+    if (!g) return null;
+    const map = new Map(), teams = new Map();
+    g.entries.forEach(e => { const t = e.team || {}, st = {}; (e.stats || []).forEach(x => st[x.name] = x.value ?? +x.displayValue);
+      map.set(String(t.id), st); teams.set(String(t.id), { name:t.shortDisplayName || t.displayName || "", logo:(t.logos && t.logos[0] && t.logos[0].href) || "" }); });
+    const gname = groups.length > 1 ? String(g.name).replace(/^UEFA Nations League,?\s*/i, "").replace(/League ([A-D])/i, "Lega $1").replace(/Group/i, "Girone") : "";
+    return { map, teams, gname };
+  } catch { return null; }
 }
 /* Cronologia grafica: barra 0'–90' (o 120' con i supplementari), casa sopra e ospiti sotto */
 function timelineHtml(evs, m){
@@ -2409,6 +2453,7 @@ async function openMatch(slug, id, again){
     const row = (t, evs5) => evs5.length ? `<div class="frow"><span class="spot">${crest(t.logo, t.name)}</span><div class="fch">${chips(evs5)}</div></div>` : "";
     html += `<div class="blk"><h3>Forma recente · ultime 5</h3><div class="sheet">${row(m.home, fH)}${row(m.away, fA)}</div></div>`;
   }
+  if (!fH.length && !fA.length && INTL.includes(slug)) html += `<div id="natform"></div>`;
   const h2hRaw = d.headToHeadGames || [];
   const h2hEspn = (Array.isArray(h2hRaw) ? h2hRaw.flatMap(x => x.events || []) : []).filter((g, i, a) => a.findIndex(y => y.id === g.id) === i);
   const h2hList = h2hEspn.length ? h2hEspn : (H2H.get(m.home.id + "-" + m.away.id) || []);
@@ -2463,6 +2508,7 @@ async function openMatch(slug, id, again){
   fillRoles(body);
   goalCheck(m, body);
   rkFill(m, slug, id);
+  if (INTL.includes(slug)) fillNatForm(m, id);
   if (!h2hEspn.length && !H2H.has(m.home.id + "-" + m.away.id)) h2hFromSchedules(m).then(() => { const b = document.getElementById("h2hb"); if (b && openEv === id) b.innerHTML = h2hHtml(H2H.get(m.home.id + "-" + m.away.id) || [], m); });
   clearTimeout(evTimer);
   if (m.state === "in") evTimer = setTimeout(() => { mem.delete(`${API}/site/v2/sports/soccer/${slug}/summary?event=${id}`); try { localStorage.removeItem("c:" + `${API}/site/v2/sports/soccer/${slug}/summary?event=${id}`); } catch {} openMatch(slug, id, true); }, 20000);
@@ -3648,10 +3694,11 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "4.3", APP_DATE = "10 novembre 2026";
+const APP_VER = "4.4", APP_DATE = "12 novembre 2026";
 const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
 /* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
 const NOVITA = [
+  ["4.4", "12 novembre 2026", ["Partite delle nazionali (Nations League): posizione nel girone e classifica del girone, anche live durante la partita.", "Nazionali: forma recente con le ultime 5 partite di tutte le competizioni (amichevoli e qualificazioni comprese) e precedenti tra le due squadre.", "Classifica live anche dentro le partite di campionato."]],
   ["4.3", "10 novembre 2026", ["Il logo di una competizione appena aggiunta (come la Norvegia) compare subito, senza aspettare l'aggiornamento settimanale dei loghi."]],
   ["4.2", "10 novembre 2026", ["Aggiunto il campionato norvegese (Eliteserien), sotto la Premiership scozzese: partite, risultati live, classifica e squadre."]],
   ["4.1", "9 novembre 2026", ["Questo diario delle novità: si apre toccando la versione in fondo alla pagina Storia."]],
