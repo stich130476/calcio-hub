@@ -1042,6 +1042,16 @@ html[data-theme="light"] .tscr.hd .srt.on{background:#e3ecff} html[data-theme="l
 .lvdot.sm{display:inline-block;width:8px;height:8px;margin:0 7px 1px 0;vertical-align:middle}
 .rkchip.lvk{box-shadow:inset 0 0 0 1.5px var(--lvt)} .rkchip.lvk b{color:var(--lvt)}
 .phc{display:flex;margin-top:4px} .phc em{font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-right:2px}
+.psplit{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:12px}
+.psp{padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.psp + .psp{border-left:1px solid var(--line)}
+.psl{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.psn{font:800 16px var(--f-num);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.psv{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--fg2)} .psv b{font:800 17px var(--f-num);color:var(--fg)}
+.psa{font-size:12px;color:#6fb0ff;font-weight:700}
+html[data-theme="light"] .psa{color:#1d5fe0}
+tr.ptot td{background:rgba(111,176,255,.08);font-weight:700} tr.ptot td.pavg{font-size:12px;color:var(--mute)}
+html[data-theme="light"] tr.ptot td{background:#eef3ff}
 </style>
 </head>
 <body>
@@ -2939,7 +2949,9 @@ async function seasonInfo(slug){
   return { year: s.year, type: (s.type && (s.type.id || s.type.type)) || 1 };
 }
 /* Squadra di club attuale (e nazionale) del giocatore, dalla scheda ESPN dell'atleta */
-async function playerClub(p){
+const PCLUB = new Map();
+function playerClub(p){ if (!PCLUB.has(p.id)) PCLUB.set(p.id, playerClub0(p)); return PCLUB.get(p.id); }
+async function playerClub0(p){
   try {
     const { data } = await getJSON(`https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/${p.id}`, 86400);
     const a = data.athlete || data, teams = [a.team, ...(a.teams || [])].filter(Boolean);
@@ -2977,6 +2989,11 @@ async function openPlayer(p){
   let slugs = [home, ...(CUPS[home] || []), ...UEFA_CUPS].filter(Boolean);
   const memo = [...seasonMemo.entries()].find(([k]) => k.startsWith((p.teamId || "?") + "|"));
   if (memo){ try { const all = await memo[1].p; if (all && all.length) slugs = [...new Set([home, ...all.map(m => m.slug)].filter(Boolean))]; } catch {} }
+  /* anche l'altra "metà" del giocatore: il campionato e le coppe del club se lo apri dalla nazionale, le partite della nazionale se lo apri dal club */
+  const club = await playerClub(p);
+  if (club && club.nat && club.slug) slugs.push(club.slug, ...(CUPS[club.slug] || []));
+  slugs.push(...INTL);
+  slugs = [...new Set(slugs.filter(Boolean))];
   const rows = (await Promise.all(slugs.map(async s => {
     try {
       const si = await seasonInfo(s);
@@ -2993,13 +3010,28 @@ async function openPlayer(p){
   const tiles = isGk ? [["Presenze", sum("appearances")], ["Minuti", sum("minutes")], ["Gol subiti", sum("goalsConceded")], ["Porta inviolata", sum("cleanSheet")]]
                      : [["Presenze", sum("appearances")], ["Gol", sum("totalGoals")], ["Assist", sum("goalAssists")], ["Minuti", sum("minutes")]];
   const n = v => v == null || isNaN(v) ? "–" : Math.round(v);
-  box.innerHTML = `<div class="seclbl" style="margin:16px 4px 8px">Stagione in corso</div><div class="sheet tiles">${tiles.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join("")}</div>
+  rows.sort((a, b) => INTL.includes(a.s) - INTL.includes(b.s));          // prima il club, poi la nazionale
+  const part = nat => { const rr = rows.filter(r => INTL.includes(r.s) === nat); if (!rr.length) return null;
+    const pr = rr.reduce((a, r) => a + (+r.st.appearances || 0), 0), g = rr.reduce((a, r) => a + (+r.st.totalGoals || 0), 0), as = rr.reduce((a, r) => a + (+r.st.goalAssists || 0), 0), mi = rr.reduce((a, r) => a + (+r.st.minutes || 0), 0);
+    return { pr, g, as, mi, avg:pr ? (g / pr).toFixed(2).replace(".", ",") : "0" }; };
+  const pc = part(false), pn = part(true);
+  const clubName = club && club.nat ? club.name : (!INTL.includes(home || "") ? p.team : "");
+  const natName = club && !club.nat ? club.name : (INTL.includes(home || "") ? p.team : p.nat || "");
+  const split = pc && pn ? `<div class="sheet psplit">${[[clubName || "Club", "Con il club", pc], [natName || "Nazionale", "In nazionale", pn]].map(([nm, lab, x]) => `
+      <div class="psp"><span class="psl">${esc(lab)}</span><b class="psn">${esc(nm)}</b>
+        <div class="psv"><span><b>${x.pr}</b> pres</span><span><b>${x.g}</b> gol</span><span><b>${x.as}</b> ass</span></div>
+        <span class="psa">${isGk ? x.mi + " minuti" : "Media gol: " + x.avg + " a partita"}</span></div>`).join("")}</div>` : "";
+  const rowHtml = (r, l, lg) => `<tr><td class="l"><div class="tm">${lg ? `<img src="${esc(lg)}" alt="" style="width:20px;height:20px;object-fit:contain">` : ""}<span>${esc(l.n)}</span></div></td>
+        <td>${n(r.st.appearances)}</td><td>${n(r.st.minutes)}</td>${isGk ? `<td>${n(r.st.goalsConceded)}</td><td>${n(r.st.cleanSheet)}</td>` : `<td class="pts">${n(r.st.totalGoals)}</td><td>${n(r.st.goalAssists)}</td>`}
+        <td>${n(r.st.yellowCards)}</td><td>${n(r.st.redCards)}</td><td class="x">${n(r.st.totalShots)}</td><td class="x">${r.st.passPct != null ? Math.round(r.st.passPct * 100) + "%" : "–"}</td></tr>`;
+  const totRow = (lab, x) => isGk ? "" : `<tr class="ptot"><td class="l"><b>${esc(lab)}</b></td><td>${x.pr}</td><td>${x.mi}</td><td class="pts">${x.g}</td><td>${x.as}</td><td colspan="2" class="pavg">${x.avg}/p</td><td class="x"></td><td class="x"></td></tr>`;
+  box.innerHTML = `<div class="seclbl" style="margin:16px 4px 8px">Stagione in corso</div><div class="sheet tiles">${tiles.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join("")}</div>${split}
     <div class="seclbl" style="margin:16px 4px 8px">Per competizione</div>
     <div class="sheet"><div class="tbl-wrap"><table><thead><tr><th class="l">Competizione</th><th>Pres</th><th>Min</th>${isGk ? "<th>GS</th><th>Inv</th>" : "<th>Gol</th><th>Ass</th>"}<th>Amm</th><th>Esp</th><th class="x">Tiri</th><th class="x">Pass. %</th></tr></thead><tbody>
-    ${rows.map(r => { const l = BY[r.s] || { n:r.s }, lg = leagueLogo(r.s);
-      return `<tr><td class="l"><div class="tm">${lg ? `<img src="${esc(lg)}" alt="" style="width:20px;height:20px;object-fit:contain">` : ""}<span>${esc(l.n)}</span></div></td>
-        <td>${n(r.st.appearances)}</td><td>${n(r.st.minutes)}</td>${isGk ? `<td>${n(r.st.goalsConceded)}</td><td>${n(r.st.cleanSheet)}</td>` : `<td class="pts">${n(r.st.totalGoals)}</td><td>${n(r.st.goalAssists)}</td>`}
-        <td>${n(r.st.yellowCards)}</td><td>${n(r.st.redCards)}</td><td class="x">${n(r.st.totalShots)}</td><td class="x">${r.st.passPct != null ? Math.round(r.st.passPct * 100) + "%" : "–"}</td></tr>`; }).join("")}
+    ${rows.map((r, i) => { const l = BY[r.s] || { n:INTL_N[r.s] || r.s }, lg = leagueLogo(r.s);
+      const sep = pc && pn && i > 0 && INTL.includes(r.s) && !INTL.includes(rows[i - 1].s) ? totRow("Totale club", pc) : "";
+      return sep + rowHtml(r, l, lg); }).join("")}${pc && pn ? totRow("Totale nazionale", pn) : ""}
+
     </tbody></table></div></div><p class="note" style="text-align:center;margin-top:12px">Ruota il telefono per tiri e precisione nei passaggi.</p>`;
 }
 document.addEventListener("click", e => {
@@ -3711,10 +3743,11 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "4.5", APP_DATE = "12 novembre 2026";
+const APP_VER = "4.6", APP_DATE = "12 novembre 2026";
 const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
 /* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
 const NOVITA = [
+  ["4.6", "12 novembre 2026", ["Scheda giocatore: tra le competizioni ci sono sia quelle del club (campionato e coppe) sia quelle della nazionale.", "Nuovo riquadro \"Con il club\" / \"In nazionale\" con presenze, gol, assist e media gol a partita, e totali separati nella tabella."]],
   ["4.5", "12 novembre 2026", ["Scheda giocatore: oltre alla nazionale compare anche la squadra di club attuale (e viceversa, aprendolo dal club si vede la sua nazionale). Toccandola si apre la squadra."]],
   ["4.4", "12 novembre 2026", ["Partite delle nazionali (Nations League): posizione nel girone e classifica del girone, anche live durante la partita.", "Nazionali: forma recente con le ultime 5 partite di tutte le competizioni (amichevoli e qualificazioni comprese) e precedenti tra le due squadre.", "Classifica live anche dentro le partite di campionato."]],
   ["4.3", "10 novembre 2026", ["Il logo di una competizione appena aggiunta (come la Norvegia) compare subito, senza aspettare l'aggiornamento settimanale dei loghi."]],
