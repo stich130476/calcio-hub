@@ -1041,6 +1041,7 @@ html[data-theme="light"] .tscmore{color:#1d5fe0}
 html[data-theme="light"] .tscr.hd .srt.on{background:#e3ecff} html[data-theme="light"] .tscr.hd .srt.on::after{color:#1d5fe0}
 .lvdot.sm{display:inline-block;width:8px;height:8px;margin:0 7px 1px 0;vertical-align:middle}
 .rkchip.lvk{box-shadow:inset 0 0 0 1.5px var(--lvt)} .rkchip.lvk b{color:var(--lvt)}
+.phc{display:flex;margin-top:4px} .phc em{font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-right:2px}
 </style>
 </head>
 <body>
@@ -2937,16 +2938,32 @@ async function seasonInfo(slug){
   const s = ((data.leagues || [])[0] || {}).season || data.season || {};
   return { year: s.year, type: (s.type && (s.type.id || s.type.type)) || 1 };
 }
+/* Squadra di club attuale (e nazionale) del giocatore, dalla scheda ESPN dell'atleta */
+async function playerClub(p){
+  try {
+    const { data } = await getJSON(`https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/${p.id}`, 86400);
+    const a = data.athlete || data, teams = [a.team, ...(a.teams || [])].filter(Boolean);
+    const isNat = t => /national|nazional/i.test(String(t.type || "")) || (p.nat && plainW(t.displayName || "") === plainW(p.nat)) || (a.citizenship && plainW(t.displayName || "") === plainW(a.citizenship));
+    const curIsNat = INTL.includes(p.slug || "") || (p.nat && plainW(p.team || "") === plainW(p.nat));
+    const pick = curIsNat ? teams.find(t => !isNat(t)) : teams.find(t => isNat(t));
+    if (!pick || String(pick.id) === String(p.teamId)) return null;
+    const idx = await teamsIndex().catch(() => []), known = (Array.isArray(idx) ? idx : [...idx.values()]).find(x => x.id === String(pick.id));
+    const logo = (pick.logos && pick.logos[0] && pick.logos[0].href) || pick.logo || (known && known.logo) || "";
+    return { id:String(pick.id), name:pick.shortDisplayName || pick.displayName || pick.name, full:pick.displayName || pick.name, logo, slug:known ? known.slug : (curIsNat ? "" : "uefa.nations"), nat:curIsNat };
+  } catch { return null; }
+}
 async function openPlayer(p){
   const body = makeSheet("ovP", 50, p.name);
   const cm = p.height ? Math.round(p.height * 2.54) : null, kg = p.weight ? Math.round(p.weight * 0.4536) : null;
   const facts = [p.posName && ["Ruolo", posIt(p.posName)], p.age && ["Età", p.age + " anni"], p.nat && ["Nazionalità", p.nat], cm && ["Altezza", cm + " cm"], kg && ["Peso", kg + " kg"], p.jersey && ["Maglia", p.jersey]].filter(Boolean);
   body.innerHTML = `<div class="ph-head"><span class="bigface">${faceImg(p.id, p.name, "hs")}</span>
       <div class="tt"><h1>${esc(p.name)}</h1>
-        <div class="phteam" ${p.teamId ? `data-cal="${esc(p.teamId)}" data-sl="${esc(p.slug || "")}" data-nm="${esc(p.team)}" data-lg="${esc(p.teamLogo || "")}" role="button"` : ""}>${p.teamLogo ? crest(p.teamLogo, p.team) : ""}<span>${esc(p.team || "")}</span></div></div></div>
+        <div class="phteam" ${p.teamId ? `data-cal="${esc(p.teamId)}" data-sl="${esc(p.slug || "")}" data-nm="${esc(p.team)}" data-lg="${esc(p.teamLogo || "")}" role="button"` : ""}>${p.teamLogo ? crest(p.teamLogo, p.team) : ""}<span>${esc(p.team || "")}</span></div><div id="phclub"></div></div></div>
     ${facts.length ? `<div class="sheet facts">${facts.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
     <div id="pstats"><div class="sheet" style="margin-top:12px"><div class="skel"></div><div class="skel"></div></div></div><div id="plast"></div>`;
   playerLast(p).then(h => { const b = body.querySelector("#plast"); if (b && h) b.innerHTML = h; });
+  playerClub(p).then(c => { const b = body.querySelector("#phclub"); if (!b || !c) return;
+    b.innerHTML = `<div class="phteam phc" ${c.slug ? `data-cal="${esc(c.id)}" data-sl="${esc(c.slug)}" data-nm="${esc(c.full)}" data-lg="${esc(c.logo)}" role="button"` : ""}><em>${c.nat ? "Club" : "Nazionale"}</em>${c.logo ? crest(c.logo, c.name) : ""}<span>${esc(c.name)}</span></div>`; });
   wikiFace(p).then(u => {
     if (!u) return;
     const bf = body.querySelector(".bigface"); if (!bf) return;
@@ -3694,10 +3711,11 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "4.4", APP_DATE = "12 novembre 2026";
+const APP_VER = "4.5", APP_DATE = "12 novembre 2026";
 const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
 /* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
 const NOVITA = [
+  ["4.5", "12 novembre 2026", ["Scheda giocatore: oltre alla nazionale compare anche la squadra di club attuale (e viceversa, aprendolo dal club si vede la sua nazionale). Toccandola si apre la squadra."]],
   ["4.4", "12 novembre 2026", ["Partite delle nazionali (Nations League): posizione nel girone e classifica del girone, anche live durante la partita.", "Nazionali: forma recente con le ultime 5 partite di tutte le competizioni (amichevoli e qualificazioni comprese) e precedenti tra le due squadre.", "Classifica live anche dentro le partite di campionato."]],
   ["4.3", "10 novembre 2026", ["Il logo di una competizione appena aggiunta (come la Norvegia) compare subito, senza aspettare l'aggiornamento settimanale dei loghi."]],
   ["4.2", "10 novembre 2026", ["Aggiunto il campionato norvegese (Eliteserien), sotto la Premiership scozzese: partite, risultati live, classifica e squadre."]],
