@@ -133,6 +133,12 @@ img{max-width:100%}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -2px 4px rgba(0,30,120,.35),0 5px 16px rgba(37,99,255,.55)}
 .ordbar{display:flex;justify-content:flex-end;margin:-2px 0 10px}
 .ordbar .seg button{padding:6px 14px;font-size:13px}
+/* iPad e schermi larghi: "Per competizione / Per orario" sulla stessa riga dei giorni */
+@media (min-width:700px){
+  .dayrow{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+  .dayrow .days{flex:1;min-width:0;margin-right:0;padding-bottom:6px}
+  .dayrow .ordbar{flex:none;margin:0 0 4px}
+}
 .days{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:4px 16px 10px}
 .days::-webkit-scrollbar{display:none}
 .day{flex:none;min-width:60px;padding:7px 10px 8px;border-radius:15px;text-align:center}
@@ -1567,8 +1573,8 @@ async function viewOggi(){
   const L = S.league === "all" ? null : BY[S.league];
   const days = [-2,-1,0,1,2,3,4,5,6];
   $("#view").innerHTML = header(L ? esc(L.n) : "Partite", L) +
-    `<div class="days">${days.map(o => { const [a,b] = dayLabel(o); return `<button class="day press" data-d="${o}" aria-current="${S.day === o}"><span>${a}</span><b>${b}</b></button>`; }).join("")}</div>
-     ${!L ? `<div class="ordbar"><div class="seg" id="ord"><button class="press" data-ord="comp" aria-current="${store.get("ordOggi") !== "time"}">Per competizione</button><button class="press" data-ord="time" aria-current="${store.get("ordOggi") === "time"}">Per orario</button></div></div>` : ""}
+    `<div class="dayrow"><div class="days">${days.map(o => { const [a,b] = dayLabel(o); return `<button class="day press" data-d="${o}" aria-current="${S.day === o}"><span>${a}</span><b>${b}</b></button>`; }).join("")}</div>
+     ${!L ? `<div class="ordbar"><div class="seg" id="ord"><button class="press" data-ord="comp" aria-current="${store.get("ordOggi") !== "time"}">Per competizione</button><button class="press" data-ord="time" aria-current="${store.get("ordOggi") === "time"}">Per orario</button></div></div>` : ""}</div>
      ${!L && S.day === 0 ? aoCard() : ""}<div id="list">${skel(4)}</div>`;
   const ob = $("#ord"); if (ob) ob.addEventListener("click", e => { const b = e.target.closest("[data-ord]"); if (!b) return; store.set("ordOggi", b.dataset.ord); viewOggi(); });
   $("#view").querySelector(".days").addEventListener("click", e => { const b = e.target.closest(".day"); if (!b) return; S.day = +b.dataset.d; save(); viewOggi(); });
@@ -3783,10 +3789,11 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "5.1", APP_DATE = "18 novembre 2026";
+const APP_VER = "5.2", APP_DATE = "18 novembre 2026";
 const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
 /* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
 const NOVITA = [
+  ["5.2", "18 novembre 2026", ["iPad: \"Per competizione / Per orario\" sta sulla stessa riga dei giorni, così le partite salgono più in alto."]],
   ["5.1", "18 novembre 2026", ["iPad: la colonna delle competizioni è un po' più larga e non si sposta più di lato; i nomi lunghi stanno tutti dentro.", "Il logo di una competizione che non era arrivato (es. Norvegia) viene richiesto di nuovo da solo."]],
   ["5.0", "17 novembre 2026", ["Porta della presentazione in stile San Siro: rete a maglie quadrate grandi con fili spessi, rete \"a scatola\" più profonda, pali bianchi più spessi."]],
   ["4.9", "17 novembre 2026", ["Presentazione ancora più realistica: rete a rombi come negli stadi, pali in alluminio col riflesso, tribuna e riflettori sfocati come in una foto, erba con la grana."]],
