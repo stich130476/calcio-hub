@@ -84,7 +84,7 @@ img{max-width:100%}
 
 /* ---------- Colonna loghi ---------- */
 .rail{padding:calc(env(safe-area-inset-top,0px) + 12px) 0 calc(var(--tab) + var(--sab) + 12px) env(safe-area-inset-left,0px);
-  overflow-y:auto;scrollbar-width:none;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+  overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:none;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
   border-right:1px solid var(--line);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px)}
 .rail::-webkit-scrollbar{display:none}
 .rail-inner{display:flex;flex-direction:column;align-items:center;gap:7px}
@@ -727,10 +727,10 @@ td.frm{white-space:nowrap}
 .pl .nums .x2{display:none}
 @media (min-width:600px){ .pl .nums .x2{display:block} }
 @media (min-width:900px){
-  :root{--rail:214px}
-  .rail-inner{align-items:stretch;padding:0 12px}
-  .lg{width:auto;padding:5px 10px 5px 5px}
-  .lg .nm{display:block}
+  :root{--rail:236px}
+  .rail-inner{align-items:stretch;padding:0 10px}
+  .lg{width:auto;min-width:0;padding:5px 8px 5px 5px}
+  .lg .nm{display:block;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis}
   .lg[aria-current="true"]{background:rgba(255,255,255,.08)}
   .rail .sep{width:auto;margin:8px 6px}
   .rail .lbl{margin-left:8px}
@@ -1544,15 +1544,17 @@ const skel = n => `<div class="sheet">${'<div class="skel"></div>'.repeat(n)}</d
 /* ---------- Loghi competizioni (aggiornati ogni settimana) ---------- */
 async function ensureLogos(){
   const saved = store.get("logos") || {}, tries = store.get("logoTry") || {};
+  const age = Date.now() - (store.get("logosT") || 0);
   const missing = LEAGUES.some(l => !saved[l.s] && !tries[l.s]);      // competizione nuova: carica subito il suo logo
-  if (!missing && store.get("logosV") === 3 && Date.now() - (store.get("logosT") || 0) < 7 * 864e5) return;
+  const noLogo = LEAGUES.some(l => !saved[l.s]);                       // logo mancante: si riprova ogni 6 ore
+  if (!missing && !(noLogo && age > 6 * 36e5) && store.get("logosV") === 3 && age < 7 * 864e5) return;
   await Promise.all(LEAGUES.map(async l => {
     try {
       const { data } = await getJSON(`${API}/site/v2/sports/soccer/${l.s}/scoreboard`, 3600);
       const logos = (data.leagues && data.leagues[0] && data.leagues[0].logos) || [];
       const dark = logos.find(x => (x.rel || []).includes("dark"));
       const href = (dark || logos[0] || {}).href;
-      if (href && !/default-team-logo/.test(href)) saved[l.s] = href;
+      if (href && !/default-team-logo/.test(href)){ saved[l.s] = href; delete tries[l.s]; }
       else { const lid = data.leagues && data.leagues[0] && data.leagues[0].id; if (lid) tries[l.s] = `https://a.espncdn.com/i/leaguelogos/soccer/500/${lid}.png`; delete saved[l.s]; }
     } catch {}
   }));
@@ -3781,10 +3783,11 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "5.0", APP_DATE = "17 novembre 2026";
+const APP_VER = "5.1", APP_DATE = "18 novembre 2026";
 const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
 /* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
 const NOVITA = [
+  ["5.1", "18 novembre 2026", ["iPad: la colonna delle competizioni è un po' più larga e non si sposta più di lato; i nomi lunghi stanno tutti dentro.", "Il logo di una competizione che non era arrivato (es. Norvegia) viene richiesto di nuovo da solo."]],
   ["5.0", "17 novembre 2026", ["Porta della presentazione in stile San Siro: rete a maglie quadrate grandi con fili spessi, rete \"a scatola\" più profonda, pali bianchi più spessi."]],
   ["4.9", "17 novembre 2026", ["Presentazione ancora più realistica: rete a rombi come negli stadi, pali in alluminio col riflesso, tribuna e riflettori sfocati come in una foto, erba con la grana."]],
   ["4.8", "17 novembre 2026", ["Nuova presentazione iniziale: porta più realistica, con pali e traversa tondi e lucidi, rete a maglie quadrate con profondità e la rete che si tende quando il pallone entra all'incrocio."]],
