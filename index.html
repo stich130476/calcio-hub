@@ -1161,7 +1161,7 @@ html[data-theme="light"] .pgrp.nat .pgm{background:#e2f6fa}
     var frames=[];
     for(var k=0;k<=40;k++){ var q=P(k/40); frames.push({transform:tr(q[0],q[1],q[2]), offset:k/40}); }
     ball.animate(frames,{duration:FLY,delay:T0,easing:ease,fill:"both"});
-    img.animate([{transform:"rotate(0deg)"},{transform:"rotate(900deg)"}],{duration:FLY,delay:T0,easing:ease,fill:"both"});
+    img.animate([{transform:"rotate(0deg)"},{transform:"rotate(-430deg)"}],{duration:FLY,delay:T0,easing:"linear",fill:"both"});   // antiorario, lento abbastanza da non sembrare girare al contrario
     /* le lettere seguono la stessa traiettoria del tiro e poi si posano al loro posto */
     title.style.opacity=1;
     lts.forEach(function(l,i){
@@ -3795,10 +3795,11 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "5.3", APP_DATE = "23 novembre 2026";
+const APP_VER = "5.4", APP_DATE = "23 novembre 2026";
 const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
 /* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
 const NOVITA = [
+  ["5.4", "23 novembre 2026", ["Presentazione: il pallone gira in senso antiorario, più lento e regolare, così si vede bene l'effetto del tiro a giro."]],
   ["5.3", "23 novembre 2026", ["Presentazione: il pallone ora gira nel verso giusto, come un vero tiro a giro verso l'incrocio."]],
   ["5.2", "18 novembre 2026", ["\"Per competizione / Per orario\" sta sulla stessa riga dei giorni, così le partite salgono più in alto: su iPad con le scritte, su iPhone con due piccole icone (elenco e orologio)."]],
   ["5.1", "18 novembre 2026", ["iPad: la colonna delle competizioni è un po' più larga e non si sposta più di lato; i nomi lunghi stanno tutti dentro.", "Il logo di una competizione che non era arrivato (es. Norvegia) viene richiesto di nuovo da solo."]],
