@@ -453,7 +453,7 @@ html.ballgo .tlogo.ball .bimg img{animation:ballspin 5.2s cubic-bezier(.12,.62,.
 .tlogo.ball,.top .tlogo.ball{background:none!important;border-color:transparent!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html.ballstill .tlogo.ball .bimg{opacity:1;animation:ballfloat 4.5s ease-in-out infinite}
 @keyframes ballroll{0%{transform:translateX(-62vw);opacity:1}100%{transform:none;opacity:1}}
-@keyframes ballspin{from{transform:rotate(1260deg)}to{transform:rotate(0)}}
+@keyframes ballspin{from{transform:rotate(-1260deg)}to{transform:rotate(0)}}   /* orario: rotola sul "pavimento" verso destra */
 .tlogo.ball .bimg i{position:absolute;inset:0;border-radius:50%;pointer-events:none;
   background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 32%),radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 58%,rgba(5,12,35,.38) 100%)}
 @keyframes ballin{0%{transform:translate(-60px,-26px) scale(.35);opacity:0}35%{opacity:1}55%{transform:translate(0,0) scale(1.08)}68%{transform:translate(0,-7px) scale(.97)}80%{transform:translate(0,0) scale(1.03)}90%{transform:translate(0,-2px)}100%{transform:none}}
@@ -3805,10 +3805,11 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "5.6", APP_DATE = "24 novembre 2026";
+const APP_VER = "5.7", APP_DATE = "24 novembre 2026";
 const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
 /* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
 const NOVITA = [
+  ["5.7", "24 novembre 2026", ["Il pallone che entra nell'app gira in senso orario, come se rotolasse davvero sul terreno, fino a fermarsi davanti a \"Partite\"."]],
   ["5.6", "24 novembre 2026", ["Finita la presentazione, il pallone entra nell'app rotolando da sinistra con la stessa rotazione del tiro, si ferma davanti a \"Partite\" e smette di girare lentissimamente.", "In verticale il pallone non si vede più fermo all'inizio del tiro."]],
   ["5.5", "24 novembre 2026", ["Presentazione su iPhone in verticale: il pallone fa una vera parabola a giro, da sinistra si apre verso destra e rientra sotto l'incrocio (in orizzontale resta com'era)."]],
   ["5.4", "23 novembre 2026", ["Presentazione: il pallone gira in senso antiorario, più lento e regolare, così si vede bene l'effetto del tiro a giro."]],
