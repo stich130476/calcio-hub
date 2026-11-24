@@ -1152,8 +1152,10 @@ html[data-theme="light"] .pgrp.nat .pgm{background:#e2f6fa}
     function tr(x,y,s,rot){ return "translate("+x+"px,"+y+"px) scale("+s+")"+(rot!=null ? " rotate("+rot+"deg)" : ""); }
     /* traiettoria: in verticale come prima; in orizzontale una curva a giro (Bézier) che sfrutta tutta la larghezza */
     function P(t){
-      if(K!=="l"){ var a=start, b=mid, c=[end[0],end[1],1], u=t<.5 ? t/.5 : (t-.5)/.5, A=t<.5 ? a : b, B=t<.5 ? b : c;
-        return [A[0]+(B[0]-A[0])*u, A[1]+(B[1]-A[1])*u, A[2]+(B[2]-A[2])*u]; }
+      if(K!=="l"){   /* verticale: tiro a giro di destro dalla sinistra — parte basso a sinistra, si apre verso destra e rientra sotto l'incrocio */
+        var q0=[-R*1.3, V.h*.82-R], q1=[V.w*.34-R, V.h*.90-R], q2=[V.w*.86-R, V.h*.64-R], q3=[end[0],end[1]], n=1-t;
+        var px=n*n*n*q0[0]+3*n*n*t*q1[0]+3*n*t*t*q2[0]+t*t*t*q3[0], py=n*n*n*q0[1]+3*n*n*t*q1[1]+3*n*t*t*q2[1]+t*t*t*q3[1];
+        return [px, py, 1.45+(1-1.45)*Math.pow(t,.9)]; }
       var p0=[-R*1.6, V.h+R*.2-R], p1=[V.w*.42-R, V.h*.98-R], p2=[V.w*.80-R, V.h*.62-R], p3=[end[0],end[1]], m=1-t;
       var x=m*m*m*p0[0]+3*m*m*t*p1[0]+3*m*t*t*p2[0]+t*t*t*p3[0], y=m*m*m*p0[1]+3*m*m*t*p1[1]+3*m*t*t*p2[1]+t*t*t*p3[1];
       return [x, y, 1.6+(1-1.6)*Math.pow(t,.9)];
@@ -3795,10 +3797,11 @@ function bindStoria(){
   const s = $("#hseg"); if (!s) return;
   s.addEventListener("click", e => { const b = e.target.closest("[data-h]"); if (!b) return; S.hist = b.dataset.h; save(); render(); animView(); });
 }
-const APP_VER = "5.4", APP_DATE = "23 novembre 2026";
+const APP_VER = "5.5", APP_DATE = "24 novembre 2026";
 const verFoot = () => `<button class="appver" data-novita>Calcio Hub · Versione ${APP_VER} · ${APP_DATE}<span>Novità delle versioni ›</span></button>`;
 /* Diario delle versioni: la più recente in cima. A ogni aggiornamento si aggiunge una voce qui. */
 const NOVITA = [
+  ["5.5", "24 novembre 2026", ["Presentazione su iPhone in verticale: il pallone fa una vera parabola a giro, da sinistra si apre verso destra e rientra sotto l'incrocio (in orizzontale resta com'era)."]],
   ["5.4", "23 novembre 2026", ["Presentazione: il pallone gira in senso antiorario, più lento e regolare, così si vede bene l'effetto del tiro a giro."]],
   ["5.3", "23 novembre 2026", ["Presentazione: il pallone ora gira nel verso giusto, come un vero tiro a giro verso l'incrocio."]],
   ["5.2", "18 novembre 2026", ["\"Per competizione / Per orario\" sta sulla stessa riga dei giorni, così le partite salgono più in alto: su iPad con le scritte, su iPhone con due piccole icone (elenco e orologio)."]],
