@@ -3,7 +3,7 @@
  "campionato": "Serie C · Girone C",
  "stagione": "2026-27",
  "fonte": "inter.it (calendario e risultati ufficiali)",
- "aggiornato": "2026-11-22",
+ "aggiornato": "2026-11-25",
  "partite": [
   {
    "g": 1,
@@ -127,7 +127,9 @@
    "d": "2026-11-25T14:30:00+01:00",
    "ora": true,
    "casa": "Audace Cerignola",
-   "ospite": "Inter U23"
+   "ospite": "Inter U23",
+   "gc": 3,
+   "go": 0
   },
   {
    "g": 15,
